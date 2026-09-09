@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
-import FloatingActions from './components/FloatingActions';
 import Home from './pages/Home';
 import About from './pages/About';
 import PracticeAreas from './pages/PracticeAreas';
@@ -58,7 +57,6 @@ export default function App() {
         {renderPage()}
       </main>
       <Footer onNavigate={navigateTo} />
-      <FloatingActions onNavigate={navigateTo} />
     </div>
   );
 }

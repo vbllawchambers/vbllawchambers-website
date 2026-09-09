@@ -1,156 +1,95 @@
 import React from 'react';
-import { Shield, Heart, Target, Award, CheckCircle, ArrowRight, UserCheck, FileCheck, Scale } from 'lucide-react';
+import { Shield, Heart, Target, Award } from 'lucide-react';
 
-export default function About({ onNavigate }) {
-  const handleNavigate = (path) => {
-    if (onNavigate) onNavigate(path);
-  };
-
+export default function About() {
   const coreValues = [
     {
       icon: Shield,
-      title: 'Integrity & Ethics',
-      description: 'We uphold the highest ethical standards, providing honest legal opinions without false assurances.',
+      title: 'Integrity',
+      description: 'We uphold the highest ethical standards in all our legal practices.',
     },
     {
       icon: Heart,
-      title: 'Client Empathy',
-      description: 'We understand the personal and emotional stakes of court matters and treat every client with dignity.',
+      title: 'Compassion',
+      description: 'We understand the personal nature of legal matters and treat every client with empathy.',
     },
     {
       icon: Target,
-      title: 'Strategic Rigor',
-      description: 'Meticulous case preparation, sound legal research, and disciplined courtroom advocacy.',
+      title: 'Excellence',
+      description: 'We strive for excellence in every case, providing the best possible legal representation.',
     },
     {
       icon: Award,
-      title: '25+ Years Experience',
-      description: 'A quarter-century of proven courtroom dedication across Kavali, Nellore, and regional tribunals.',
+      title: 'Experience',
+      description: 'With over 25 years of experience, we bring proven expertise to every case.',
     },
   ];
 
   return (
     <div>
       {/* Header Banner */}
-      <section className="bg-slate-950 text-white py-20 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-900/95 to-slate-900/80" />
-        <div className="absolute top-0 right-0 w-96 h-96 bg-amber-600/10 rounded-full blur-3xl" />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-600/30 border border-amber-500/40 text-amber-300 text-xs font-semibold uppercase tracking-wider mb-4 backdrop-blur-sm">
-            <Award className="w-4 h-4 text-amber-400" />
-            <span>Established 1999 • Kavali, Andhra Pradesh</span>
-          </div>
-          <h1 className="text-4xl sm:text-5xl font-serif font-bold tracking-tight text-white mb-4">
-            About VBL Law Chambers
-          </h1>
-          <p className="text-lg sm:text-xl text-slate-300 max-w-3xl leading-relaxed font-light">
-            Over 25 years of distinguished legal advocacy, civil litigation, family mediation, property title scrutiny, and statutory notary practice.
+      <section className="bg-slate-900 text-white py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h1 className="text-5xl mb-4 font-bold tracking-tight">About Us</h1>
+          <p className="text-xl text-slate-300 max-w-3xl leading-relaxed">
+            VBL LAW CHAMBERS has been a trusted name in legal services for over two decades.
           </p>
         </div>
       </section>
 
-      {/* Our Story & Chambers Leadership */}
+      {/* Our Story & Mission/Vision */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-            {/* Left 7 cols: Heritage Narrative */}
-            <div className="lg:col-span-7">
-              <div className="inline-block bg-amber-100 text-amber-800 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-3">
-                Chambers Heritage
-              </div>
-              <h2 className="text-3xl sm:text-4xl font-serif font-bold text-slate-900 mb-6">
-                Dedicated to Justice, Diligence & Lasting Legal Clarity
-              </h2>
-              <div className="space-y-4 text-slate-600 leading-relaxed text-sm sm:text-base">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <h2 className="text-4xl mb-6 font-bold text-slate-900">Our Story</h2>
+              <div className="space-y-4 text-slate-600 leading-relaxed">
                 <p>
-                  Established in 1999 in Kavali, SPSR Nellore District, <strong>VBL Law Chambers</strong> was founded on the cornerstone principles of steadfast legal ethics, thorough statutory diligence, and accessible client representation.
+                  Founded in 1999, VBL LAW CHAMBERS, has grown from a small practice to one of the most respected law firms in the region. Our commitment to excellence and client satisfaction has remained unchanged throughout our journey.
                 </p>
                 <p>
-                  Led by founding advocate <strong>Smt. V. Bhagya Lakshmi, B.Sc., B.L. (Advocate & Notary)</strong>, our chambers provides personalized legal counsel where every client's case receives direct, senior-level attention. Unlike high-turnover law firms that delegate critical casework to inexperienced associates, our clients benefit from a quarter-century of direct courtroom trials and personal oversight.
+                  We pride ourselves on providing personalized legal services that address the unique needs of each client. Our team of experienced attorneys brings a wealth of knowledge across multiple practice areas, ensuring comprehensive legal support.
                 </p>
                 <p>
-                  Over the past two and a half decades, we have handled hundreds of complex civil disputes, matrimonial settlements, property title scrutinies, testamentary wills, and court defense proceedings across local and appellate courts.
+                  Over the years, we have successfully represented hundreds of clients in complex legal matters, earning a reputation for professionalism, integrity, and results.
                 </p>
-              </div>
-
-              <div className="mt-8 pt-6 border-t border-slate-200 flex flex-wrap gap-4">
-                <a
-                  href="/attorneys"
-                  onClick={(e) => { e.preventDefault(); handleNavigate('/attorneys'); }}
-                  className="inline-flex items-center bg-slate-900 hover:bg-slate-800 text-white px-7 py-3 rounded-xl text-sm font-semibold transition-all shadow-md hover:shadow-lg"
-                >
-                  <UserCheck className="w-4 h-4 mr-2 text-amber-400" />
-                  <span>View Principal Advocate Profile</span>
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </a>
-                <a
-                  href="/practice-areas"
-                  onClick={(e) => { e.preventDefault(); handleNavigate('/practice-areas'); }}
-                  className="inline-flex items-center border border-slate-300 hover:bg-slate-50 text-slate-700 px-6 py-3 rounded-xl text-sm font-semibold transition-colors"
-                >
-                  <span>Explore Practice Areas</span>
-                </a>
               </div>
             </div>
 
-            {/* Right 5 cols: Mission & Vision Card */}
-            <div className="lg:col-span-5">
-              <div className="bg-gradient-to-br from-slate-900 to-slate-950 text-white p-8 sm:p-10 rounded-2xl border-2 border-amber-500/40 shadow-2xl relative overflow-hidden ring-2 ring-amber-400/20">
-                <div className="absolute top-0 right-0 w-48 h-48 bg-amber-600/10 rounded-full blur-3xl" />
-                
-                <div className="relative">
-                  <div className="inline-block bg-amber-500/20 text-amber-400 text-xs font-bold uppercase tracking-wider px-3.5 py-1.5 rounded-full mb-4 border border-amber-500/30">
-                    Chambers Purpose
-                  </div>
-                  
-                  <h3 className="text-2xl font-serif font-bold mb-3 text-white">Our Mission</h3>
-                  <p className="text-slate-300 mb-8 leading-relaxed text-sm font-light">
-                    To deliver exceptional, ethical legal counsel that resolves disputes promptly, safeguards property rights, and gives families total clarity through preventive legal planning and resolute courtroom advocacy.
-                  </p>
-
-                  <h3 className="text-2xl font-serif font-bold mb-3 text-white">Our Vision</h3>
-                  <p className="text-slate-300 mb-6 leading-relaxed text-sm font-light">
-                    To remain the most trusted, dependable legal chambers in Kavali and SPSR Nellore District—renowned for integrity, professional empathy, and unwavering commitment to the rule of law.
-                  </p>
-
-                  <div className="pt-6 border-t border-slate-800 flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-amber-400 flex-shrink-0" />
-                    <span className="text-xs text-amber-300 font-semibold tracking-wide">
-                      Authorized Notary Public • Govt. of Andhra Pradesh
-                    </span>
-                  </div>
-                </div>
-              </div>
+            <div className="bg-slate-100 p-8 rounded-lg border border-slate-200">
+              <h3 className="text-2xl mb-4 font-bold text-slate-900">Our Mission</h3>
+              <p className="text-slate-600 mb-8 leading-relaxed">
+                To provide exceptional legal representation while maintaining the highest standards of professionalism, integrity, and client service. We are committed to achieving the best possible outcomes for our clients through strategic thinking, meticulous preparation, and unwavering dedication.
+              </p>
+              <h3 className="text-2xl mb-4 font-bold text-slate-900">Our Vision</h3>
+              <p className="text-slate-600 leading-relaxed">
+                To be the premier law firm in the region, recognized for our legal expertise, innovative approaches, and commitment to justice. We strive to set the standard for excellence in legal services and make a positive impact in our community.
+              </p>
             </div>
           </div>
         </div>
       </section>
 
       {/* Core Values */}
-      <section className="py-20 bg-slate-50 border-t border-slate-200">
+      <section className="py-20 bg-slate-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-14">
-            <div className="inline-block bg-amber-100 text-amber-800 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-3">
-              Ethical Pillars
-            </div>
-            <h2 className="text-3xl sm:text-4xl font-serif font-bold text-slate-900 mb-3">Our Core Values</h2>
-            <p className="text-base text-slate-600 leading-relaxed">
-              These fundamental tenets guide our casework, consultation ethics, and client advocacy each day.
+          <div className="text-center mb-12">
+            <h2 className="text-4xl mb-4 font-bold text-slate-900">Our Core Values</h2>
+            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+              These values guide everything we do and shape how we serve our clients.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {coreValues.map((val, idx) => {
               const Icon = val.icon;
               return (
-                <div key={idx} className="card-luxury p-8 text-center flex flex-col justify-between">
-                  <div>
-                    <div className="bg-gradient-to-br from-amber-100 to-amber-200 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5 text-amber-700 shadow-xs">
-                      <Icon className="w-8 h-8" />
-                    </div>
-                    <h3 className="text-xl font-serif font-bold text-slate-900 mb-2">{val.title}</h3>
-                    <p className="text-slate-600 text-sm leading-relaxed">{val.description}</p>
+                <div key={idx} className="bg-white p-6 rounded-lg shadow-md text-center border border-slate-200">
+                  <div className="bg-amber-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Icon className="w-8 h-8 text-amber-600" />
                   </div>
+                  <h3 className="text-xl mb-3 font-semibold text-slate-900">{val.title}</h3>
+                  <p className="text-slate-600 text-sm leading-relaxed">{val.description}</p>
                 </div>
               );
             })}
@@ -158,48 +97,33 @@ export default function About({ onNavigate }) {
         </div>
       </section>
 
-      {/* Pillars of Recognition */}
-      <section className="py-20 bg-white border-t border-slate-200">
+      {/* Awards & Recognition */}
+      <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-14">
-            <div className="inline-block bg-amber-100 text-amber-800 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-3">
-              Practice Distinction
-            </div>
-            <h2 className="text-3xl sm:text-4xl font-serif font-bold text-slate-900 mb-3">Pillars of Practice</h2>
-            <p className="text-base text-slate-600">
-              Trusted by generations of families and property owners across SPSR Nellore District.
+          <div className="text-center mb-12">
+            <h2 className="text-4xl mb-4 font-bold text-slate-900">Awards & Recognition</h2>
+            <p className="text-lg text-slate-600">
+              Our commitment to excellence has been recognized by leading legal organizations and client communities.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="card-luxury p-8 text-center bg-white border border-slate-200 shadow-xs group hover:border-amber-500/50 transition-all">
-              <div className="w-14 h-14 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mx-auto mb-4 group-hover:bg-amber-600 group-hover:text-white transition-colors shadow-xs">
-                <Award className="w-7 h-7" />
-              </div>
-              <h3 className="text-xl font-serif font-bold text-slate-900 mb-2">25+ Years Court Practice</h3>
-              <p className="text-slate-600 text-sm leading-relaxed">
-                Extensive courtroom trial record before Senior Civil Judge, Sessions, MACT, and appellate courts.
-              </p>
+            <div className="border border-slate-200 p-6 rounded-lg text-center shadow-sm">
+              <div className="text-amber-600 text-3xl mb-2">★★★★★</div>
+              <h3 className="text-xl mb-2 font-semibold text-slate-900">Top Rated Law Firm</h3>
+              <p className="text-slate-600 text-sm">Legal Excellence Awards</p>
             </div>
 
-            <div className="card-luxury p-8 text-center bg-white border border-slate-200 shadow-xs group hover:border-amber-500/50 transition-all">
-              <div className="w-14 h-14 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mx-auto mb-4 group-hover:bg-amber-600 group-hover:text-white transition-colors shadow-xs">
-                <FileCheck className="w-7 h-7" />
-              </div>
-              <h3 className="text-xl font-serif font-bold text-slate-900 mb-2">Authorized Notary Public</h3>
-              <p className="text-slate-600 text-sm leading-relaxed">
-                Statutory attestation, sworn declarations, affidavits, testamentary wills, and powers of attorney.
-              </p>
+            <div className="border border-slate-200 p-6 rounded-lg text-center shadow-sm">
+              <div className="text-amber-600 text-3xl mb-2">🏆</div>
+              <h3 className="text-xl mb-2 font-semibold text-slate-900">Distinguished Legal Practice</h3>
+              <p className="text-slate-600 text-sm">Regional Bar Association</p>
             </div>
 
-            <div className="card-luxury p-8 text-center bg-white border border-slate-200 shadow-xs group hover:border-amber-500/50 transition-all">
-              <div className="w-14 h-14 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mx-auto mb-4 group-hover:bg-amber-600 group-hover:text-white transition-colors shadow-xs">
-                <Scale className="w-7 h-7" />
-              </div>
-              <h3 className="text-xl font-serif font-bold text-slate-900 mb-2">Direct Advocate Attention</h3>
-              <p className="text-slate-600 text-sm leading-relaxed">
-                No intermediaries or junior handoffs; full accountability and confidential handling from senior counsel.
-              </p>
+            <div className="border border-slate-200 p-6 rounded-lg text-center shadow-sm">
+              <div className="text-amber-600 text-3xl mb-2">⚖️</div>
+              <h3 className="text-xl mb-2 font-semibold text-slate-900">Outstanding Client Service</h3>
+              <p className="text-slate-600 text-sm">Legal Excellence & Notary Practice</p>
             </div>
           </div>
         </div>
