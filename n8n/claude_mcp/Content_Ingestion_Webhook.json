@@ -1,0 +1,273 @@
+{
+  "id": "ContentIngestionWebhook01",
+  "name": "Content Ingestion Webhook",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "content-upload",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": false
+        }
+      },
+      "id": "webhook-upload-trigger",
+      "name": "Upload Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -900,
+        300
+      ],
+      "webhookId": "content-upload-webhook-id"
+    },
+    {
+      "parameters": {
+        "operation": "upload",
+        "fileContent": "data",
+        "name": "={{ $binary.data.fileName || ('Upload_' + $now.format('yyyyMMdd_HHmmss') + '.mp4') }}",
+        "parents": [
+          "1Q171pLkFgucgHO0bJ1lRWlxC3en-tHZz"
+        ],
+        "options": {}
+      },
+      "id": "upload-to-drive-folder",
+      "name": "Upload to Drive To-Post",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -660,
+        300
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "mnlFtfGT4KhdV6hA",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $('Upload Webhook').item.json.body || $('Upload Webhook').item.json;\nconst driveFile = $('Upload to Drive To-Post').item.json;\n\n// Generate unique Content ID (W-timestamp)\nconst now = new Date();\nconst contentId = 'W-' + String(now.getFullYear()).slice(-2) + String(now.getMonth()+1).padStart(2, '0') + String(now.getDate()).padStart(2, '0') + '-' + String(now.getHours()).padStart(2, '0') + String(now.getMinutes()).padStart(2, '0') + String(now.getSeconds()).padStart(2, '0');\n\nconst title = body.title || 'Legal Awareness Post';\nconst caption = body.caption || '';\nconst platforms = Array.isArray(body.platforms) ? body.platforms.join(',') : (body.platforms || 'instagram,facebook,youtube');\n\n// Scheduled DateTime in ISO 8601 UTC\nlet scheduledDateTime = body.scheduledDateTime;\nif (!scheduledDateTime || scheduledDateTime === 'now') {\n  scheduledDateTime = now.toISOString();\n} else {\n  try {\n    scheduledDateTime = new Date(scheduledDateTime).toISOString();\n  } catch (e) {\n    scheduledDateTime = now.toISOString();\n  }\n}\n\nconst initialStatus = body.status || 'Pending Review'; // 'Pending Review' or 'Approved'\nconst pinterestBoardId = body.pinterestBoardId || '';\n\nreturn [{\n  json: {\n    'Content ID': contentId,\n    'Title': title,\n    'Caption': caption,\n    'Platforms': platforms.toLowerCase(),\n    'Scheduled DateTime': scheduledDateTime,\n    'Status': initialStatus,\n    'Retry Count': 0,\n    'Posted At': '',\n    'Error': '',\n    'Pinterest Board ID': pinterestBoardId,\n    'Drive File ID': driveFile.id,\n    'Instagram Status': '',\n    'Facebook Status': '',\n    'YouTube Status': '',\n    'LinkedIn Status': '',\n    'Pinterest Status': '',\n    'Threads Status': '',\n    contentId,\n    driveFileId: driveFile.id,\n    driveFileUrl: driveFile.webViewLink || ('https://drive.google.com/file/d/' + driveFile.id + '/view')\n  }\n}];"
+      },
+      "id": "prepare-sheet-data",
+      "name": "Prepare Row Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -420,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "14NFIyGUMg4hcTZ3hTIZklayVYstvxvpOesesgpEF72M",
+          "cachedResultName": "Content Calendar"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Untitled"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": []
+        },
+        "options": {}
+      },
+      "id": "append-to-sheet",
+      "name": "Append to Content Calendar",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -180,
+        300
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Oq7m04FSZnOikFQM",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"message\": \"Content uploaded and scheduled successfully!\",\n  \"contentId\": $('Prepare Row Data').item.json.contentId,\n  \"driveFileId\": $('Prepare Row Data').item.json.driveFileId,\n  \"driveFileUrl\": $('Prepare Row Data').item.json.driveFileUrl,\n  \"status\": $('Prepare Row Data').item.json.row.Status,\n  \"scheduledDateTime\": $('Prepare Row Data').item.json.row['Scheduled DateTime']\n}",
+        "options": {}
+      },
+      "id": "respond-success",
+      "name": "Respond Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        60,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "content-list",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-list-trigger",
+      "name": "Get Content Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -900,
+        550
+      ],
+      "webhookId": "content-list-webhook-id"
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "14NFIyGUMg4hcTZ3hTIZklayVYstvxvpOesesgpEF72M",
+          "cachedResultName": "Content Calendar"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Untitled"
+        },
+        "options": {}
+      },
+      "id": "read-all-calendar-rows",
+      "name": "Read Content Calendar Rows",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -660,
+        550
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Oq7m04FSZnOikFQM",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all().map(i => i.json);\n// Reverse so newest posts appear first\nconst rows = items.filter(r => r['Content ID'] && r['Content ID'].trim() !== '');\nreturn [{\n  json: {\n    success: true,\n    count: rows.length,\n    posts: rows.reverse()\n  }\n}];"
+      },
+      "id": "format-posts-response",
+      "name": "Format Posts List",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -420,
+        550
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "respond-list",
+      "name": "Respond List",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        -180,
+        550
+      ]
+    }
+  ],
+  "connections": {
+    "Upload Webhook": {
+      "main": [
+        [
+          {
+            "node": "Upload to Drive To-Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to Drive To-Post": {
+      "main": [
+        [
+          {
+            "node": "Prepare Row Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Row Data": {
+      "main": [
+        [
+          {
+            "node": "Append to Content Calendar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append to Content Calendar": {
+      "main": [
+        [
+          {
+            "node": "Respond Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Content Webhook": {
+      "main": [
+        [
+          {
+            "node": "Read Content Calendar Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Content Calendar Rows": {
+      "main": [
+        [
+          {
+            "node": "Format Posts List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Posts List": {
+      "main": [
+        [
+          {
+            "node": "Respond List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

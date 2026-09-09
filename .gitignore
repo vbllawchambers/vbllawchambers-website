@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Environment variables & secrets
+.env
+.env.*
+!.env.example
+secrets/
+*.pem
+*.key
+
+# Build outputs
+dist/
+**/dist/
+build/
+.output/
+
+# Logs & caches
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.eslintcache
+.cache/
+
+# IDE and Editor files
+.vscode/
+.idea/
+.claude/
+*.swp
+*.swo
+
+# Operating System files
+Thumbs.db
+[Dd]esktop.ini
+.DS_Store

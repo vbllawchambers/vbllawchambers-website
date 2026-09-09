@@ -1,0 +1,503 @@
+{
+  "id": "ContentApprovalRequests01",
+  "name": "Content Approval Requests",
+  "nodes": [
+    {
+      "id": "a84488dd-fa60-439c-b467-432e59e94147",
+      "name": "Every 15 Minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -800,
+        400
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 15
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "61f814a4-e864-471b-b503-1564cfcc3763",
+      "name": "Get Pending Review Rows",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -560,
+        400
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "14NFIyGUMg4hcTZ3hTIZklayVYstvxvpOesesgpEF72M",
+          "cachedResultName": "Content Calendar"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Untitled"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Status",
+              "lookupValue": "Pending Review"
+            }
+          ]
+        },
+        "combineFilters": "AND",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Oq7m04FSZnOikFQM",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "db3a274f-656e-4cf4-bb3d-3c0c33e6e9ae",
+      "name": "Mark Awaiting Response",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -80,
+        320
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "14NFIyGUMg4hcTZ3hTIZklayVYstvxvpOesesgpEF72M",
+          "cachedResultName": "Content Calendar"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Untitled"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Content ID": "={{ $json['Content ID'] }}",
+            "Status": "Awaiting Response"
+          },
+          "schema": [
+            {
+              "id": "Content ID",
+              "displayName": "Content ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ],
+          "matchingColumns": [
+            "Content ID"
+          ]
+        },
+        "options": {}
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Oq7m04FSZnOikFQM",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "248e43f5-9878-4f81-a14c-6bdab2eea288",
+      "name": "Send Approval Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        140,
+        320
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "sendAndWait",
+        "sendTo": "vbllawchambers@gmail.com",
+        "subject": "=Approval needed: {{ $('Loop Pending Rows').item.json['Title'] }}",
+        "message": "=Please review this post before it publishes automatically.\n\nContent ID: {{ $('Loop Pending Rows').item.json['Content ID'] }}\nTitle: {{ $('Loop Pending Rows').item.json['Title'] }}\nCaption: {{ $('Loop Pending Rows').item.json['Caption'] }}\nPlatforms: {{ $('Loop Pending Rows').item.json['Platforms'] }}\nScheduled: {{ $('Loop Pending Rows').item.json['Scheduled DateTime'] }}\nMedia: https://drive.google.com/file/d/{{ $('Loop Pending Rows').item.json['Drive File ID'] }}/view\n\nApprove to let it publish automatically at the scheduled time, or Decline to stop it.",
+        "responseType": "approval",
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double",
+            "approveLabel": "Approve",
+            "disapproveLabel": "Decline"
+          }
+        },
+        "options": {
+          "limitWaitTime": {
+            "values": {
+              "limitType": "afterTimeInterval",
+              "resumeAmount": 120,
+              "resumeUnit": "minutes"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "BtQ6BCEFAX3Hahns",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "id": "0b6dc9c5-272b-42c8-b1a8-ec56281fca1e",
+      "name": "Approved?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        380,
+        320
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.data?.approved }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "2f1464fa-1bd8-41af-b3b7-662118d01fac",
+      "name": "Mark Approved",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        620,
+        240
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "14NFIyGUMg4hcTZ3hTIZklayVYstvxvpOesesgpEF72M",
+          "cachedResultName": "Content Calendar"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Untitled"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Content ID": "={{ $('Loop Pending Rows').item.json['Content ID'] }}",
+            "Status": "Approved"
+          },
+          "schema": [
+            {
+              "id": "Content ID",
+              "displayName": "Content ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ],
+          "matchingColumns": [
+            "Content ID"
+          ]
+        },
+        "options": {}
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Oq7m04FSZnOikFQM",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "a6130a13-b724-4846-b189-7644cc9f8e89",
+      "name": "Loop Pending Rows",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -320,
+        400
+      ],
+      "parameters": {
+        "batchSize": 1
+      }
+    },
+    {
+      "id": "a21ab415-b276-4d4a-bc1b-dd8565cf2db6",
+      "name": "Mark Rejected",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        620,
+        420
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "14NFIyGUMg4hcTZ3hTIZklayVYstvxvpOesesgpEF72M",
+          "cachedResultName": "Content Calendar"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Untitled"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Content ID": "={{ $('Loop Pending Rows').item.json['Content ID'] }}",
+            "Status": "Rejected",
+            "Error": "Declined by admin, or the approval request expired without a response."
+          },
+          "schema": [
+            {
+              "id": "Content ID",
+              "displayName": "Content ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "Error",
+              "displayName": "Error",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ],
+          "matchingColumns": [
+            "Content ID"
+          ]
+        },
+        "options": {}
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Oq7m04FSZnOikFQM",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "d7c33668-ca63-41ed-aec5-81c47d73e841",
+      "name": "Sticky Note b8694ba2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        100,
+        300
+      ],
+      "parameters": {
+        "content": "## Content Calendar sheet\n\nUses the SAME \"Content Calendar\" sheet as the \"Postiz Social Scheduler\" workflow. This workflow watches for Status = Pending Review, sends the admin an approval email, and writes back Status = Approved or Rejected. The publishing workflow only ever touches rows already marked Approved (or Retry Pending) - it never waits on anyone itself.",
+        "color": 4
+      }
+    },
+    {
+      "id": "c9335515-358c-43f5-aae1-b97bcbeb04fb",
+      "name": "Sticky Note 2f4f26e9",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        100,
+        560
+      ],
+      "parameters": {
+        "content": "Known timing limitation: Gmail Send and Wait pauses this loop iteration until the admin responds (or up to 2 hours). If several rows are Pending Review at once, later rows in the SAME run will not get their email sent until the earlier one is resolved. A fresh run 15 minutes later will still pick up any row not yet touched, so nothing gets permanently stuck - but a slow response can delay a later row's email.",
+        "color": 3
+      }
+    },
+    {
+      "id": "21f8af2e-57e2-4e37-9eca-f2efb9fb7e5d",
+      "name": "Sticky Note e9cab125",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        100,
+        816
+      ],
+      "parameters": {
+        "content": "Setup needed before activating: connect a Google Sheets OAuth2 credential and a Gmail OAuth2 credential on the relevant nodes, then set a row's Status to Pending Review when it is ready for sign-off.",
+        "color": 6
+      }
+    }
+  ],
+  "connections": {
+    "Every 15 Minutes": {
+      "main": [
+        [
+          {
+            "node": "Get Pending Review Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Pending Review Rows": {
+      "main": [
+        [
+          {
+            "node": "Loop Pending Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Awaiting Response": {
+      "main": [
+        [
+          {
+            "node": "Send Approval Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Approval Email": {
+      "main": [
+        [
+          {
+            "node": "Approved?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Approved?": {
+      "main": [
+        [
+          {
+            "node": "Mark Approved",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark Rejected",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Approved": {
+      "main": [
+        [
+          {
+            "node": "Loop Pending Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Pending Rows": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Mark Awaiting Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Rejected": {
+      "main": [
+        [
+          {
+            "node": "Loop Pending Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "instanceId": "local-import"
+  }
+}

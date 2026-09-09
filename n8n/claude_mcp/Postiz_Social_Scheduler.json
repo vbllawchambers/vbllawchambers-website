@@ -1,0 +1,1127 @@
+{
+  "id": "ClaudePostizScheduler01",
+  "name": "Postiz Social Scheduler",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes"
+            }
+          ]
+        }
+      },
+      "id": "706f1f6f-0fae-4006-974f-a7270d3a128c",
+      "name": "Every 5 Minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -1792,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "HG1soZZYw162rjpD",
+          "cachedResultName": "Control"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "Key",
+              "keyValue": "lock"
+            }
+          ]
+        },
+        "limit": 1
+      },
+      "id": "ac8adab4-0ce9-4b10-a36e-112ed3c676ec",
+      "name": "Check Lock",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -1568,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.Value }}",
+              "operator": {
+                "operation": "notEquals",
+                "type": "string"
+              },
+              "rightValue": "true"
+            },
+            {
+              "leftValue": "={{ $json.LastUpdated ? DateTime.now().diff(DateTime.fromISO($json.LastUpdated), 'minutes').minutes : 999 }}",
+              "operator": {
+                "operation": "gt",
+                "type": "number"
+              },
+              "rightValue": 30
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "id": "374a1a7e-f9ab-4c32-bf66-5bbaadb09279",
+      "name": "Lock Free?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1344,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "HG1soZZYw162rjpD",
+          "cachedResultName": "Control"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "Key",
+              "keyValue": "lock"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Key": "lock",
+            "Value": "true",
+            "LastUpdated": "={{ $now.toISO() }}"
+          },
+          "schema": [
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Key",
+              "id": "Key",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Value",
+              "id": "Value",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "LastUpdated",
+              "id": "LastUpdated",
+              "required": false,
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "da2bedef-dc1e-40f0-8f82-90478b4719c8",
+      "name": "Acquire Lock",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -1120,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "14NFIyGUMg4hcTZ3hTIZklayVYstvxvpOesesgpEF72M",
+          "cachedResultName": "Content Calendar"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Untitled"
+        },
+        "operation": "read",
+        "resource": "sheet"
+      },
+      "id": "798cdef9-cc62-4119-a4dc-1fb73f1b7200",
+      "name": "Get Content Calendar Rows",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -896,
+        400
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Oq7m04FSZnOikFQM",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ ['Approved','Retry Pending'].includes($json.Status) && (DateTime.fromISO($json['Scheduled DateTime']) <= DateTime.now()) }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "79f33741-874e-4773-97a9-f0093d230c96",
+      "name": "Due Rows (Approved or Retry Pending)",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        -672,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://postiz:5000/public/v1/integrations",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "942fbe3f-632d-44c3-ac59-61d2f0a94abc",
+      "name": "Get Postiz Integrations",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -448,
+        400
+      ],
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "BSquAuNCdsWxuNOO",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "HG1soZZYw162rjpD",
+          "cachedResultName": "Control"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "Key",
+              "keyValue": "lock"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Key": "lock",
+            "Value": "false",
+            "LastUpdated": "={{ $now.toISO() }}"
+          },
+          "schema": [
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Key",
+              "id": "Key",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Value",
+              "id": "Value",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "LastUpdated",
+              "id": "LastUpdated",
+              "required": false,
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d132e90b-28fa-43c3-aa1a-c96f740c8feb",
+      "name": "Release Lock",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "55a31da0-94e4-4ebf-a601-07098da7b8a5",
+      "name": "All Due Posts Processed",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $json['Drive File ID'] }}"
+        },
+        "options": {
+          "binaryPropertyName": "data"
+        }
+      },
+      "id": "2c0e4578-6b24-4bf7-a439-e278bd1affc0",
+      "name": "Download Media",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        0,
+        192
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "mnlFtfGT4KhdV6hA",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://postiz:5000/public/v1/upload",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "file",
+              "value": "={{ $binary.data }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f7a5f429-d1f7-4674-82a4-ceb5332bb8b9",
+      "name": "Upload Media to Postiz",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        224,
+        192
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "BSquAuNCdsWxuNOO",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const MAX_RETRIES = 3;\nconst row = $('Loop Over Rows').item.json;\nconst fileId = $('Upload Media to Postiz').item.json.id;\nconst integrations = $('Get Postiz Integrations').all().map(i => i.json);\n\nconst platformCols = {\n  instagram: 'Instagram Status', facebook: 'Facebook Status', youtube: 'YouTube Status',\n  linkedin: 'LinkedIn Status', pinterest: 'Pinterest Status', threads: 'Threads Status',\n};\n\nconst requested = String(row.Platforms || '').toLowerCase().split(',').map(p => p.trim()).filter(Boolean);\nconst toAttempt = requested.filter(p => {\n  const col = platformCols[p];\n  const val = col ? (row[col] || '') : '';\n  return !val.startsWith('Posted');\n});\n\nconst skippedNow = [];\nconst attemptable = [];\nfor (const p of toAttempt) {\n  if (p === 'pinterest' && !(row['Pinterest Board ID'] && String(row['Pinterest Board ID']).trim() !== '')) {\n    skippedNow.push({ platform: 'pinterest', reason: 'Skipped - no Pinterest Board ID set on this row' });\n    continue;\n  }\n  attemptable.push(p);\n}\n\nconst unresolved = attemptable.filter(p => !integrations.find(i => i.identifier === p));\nconst usable = attemptable.filter(p => integrations.find(i => i.identifier === p));\n\nconst posts = usable.map(p => {\n  const integ = integrations.find(i => i.identifier === p);\n  const settings = { __type: p };\n  if (p === 'youtube') settings.type = 'public';\n  if (p === 'instagram') settings.post_type = 'post';\n  if (p === 'pinterest') settings.board = row['Pinterest Board ID'];\n  return { integration: { id: integ.id }, value: [{ content: row.Caption || '', image: [{ id: fileId }] }], settings };\n});\n\nreturn [{\n  json: {\n    hasPosts: posts.length > 0,\n    attempted: usable,\n    skippedNow,\n    unresolved,\n    payload: { type: 'schedule', date: row['Scheduled DateTime'], shortLink: false, tags: [], posts },\n  },\n}];"
+      },
+      "id": "9275aa8b-2e12-4f18-bcee-594f21141fc4",
+      "name": "Build Post Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.hasPosts }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "25c38855-15cc-47cd-b93e-265f2b5ec82d",
+      "name": "Has Posts To Send?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        672,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://postiz:5000/public/v1/posts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.payload) }}",
+        "options": {}
+      },
+      "id": "77b3d611-e70b-457b-98f9-ea5bfb20a213",
+      "name": "Create Postiz Post",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        896,
+        128
+      ],
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "BSquAuNCdsWxuNOO",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const MAX_RETRIES = 3;\nconst row = $('Loop Over Rows').item.json;\nconst buildResult = $('Build Post Payload').item.json;\nconst apiResult = $json;\nconst isError = !!(apiResult && apiResult.error);\nconst attemptedThisRound = buildResult.attempted || [];\n\nconst platformCols = {\n  instagram: 'Instagram Status', facebook: 'Facebook Status', youtube: 'YouTube Status',\n  linkedin: 'LinkedIn Status', pinterest: 'Pinterest Status', threads: 'Threads Status',\n};\n\nconst updatedStatuses = {};\nfor (const key of Object.keys(platformCols)) {\n  const col = platformCols[key];\n  const wasAttempted = attemptedThisRound.includes(key);\n  const skip = (buildResult.skippedNow || []).find(s => s.platform === key);\n  if (wasAttempted) {\n    updatedStatuses[col] = isError ? ('Failed: ' + (apiResult.error && apiResult.error.message ? apiResult.error.message : 'Postiz API error')) : 'Posted';\n  } else if (skip) {\n    updatedStatuses[col] = skip.reason;\n  } else {\n    updatedStatuses[col] = row[col] || '';\n  }\n}\n\nconst requested = String(row.Platforms || '').toLowerCase().split(',').map(p => p.trim()).filter(Boolean);\nconst allRequestedPosted = requested.length > 0 && requested.every(p => (updatedStatuses[platformCols[p]] || '').startsWith('Posted'));\n\nconst prevRetryCount = Number(row['Retry Count'] || 0);\nlet finalStatus, retryCount = prevRetryCount;\nlet scheduledDateTime = row['Scheduled DateTime'];\n\nif (allRequestedPosted) {\n  finalStatus = 'Posted';\n} else {\n  retryCount = prevRetryCount + 1;\n  if (retryCount >= MAX_RETRIES) {\n    finalStatus = 'Failed';\n  } else {\n    finalStatus = 'Retry Pending';\n    scheduledDateTime = new Date(Date.now() + 15 * Math.max(retryCount, 1) * 60000).toISOString();\n  }\n}\n\nconst errorNotes = [];\nif (isError) errorNotes.push('Postiz error: ' + (apiResult.error && apiResult.error.message ? apiResult.error.message : 'unknown'));\nfor (const s of (buildResult.skippedNow || [])) errorNotes.push(s.platform + ': ' + s.reason);\nif ((buildResult.unresolved || []).length > 0) errorNotes.push('No connected integration found for: ' + buildResult.unresolved.join(', '));\n\nreturn [{\n  json: {\n    'Content ID': row['Content ID'],\n    Status: finalStatus,\n    'Retry Count': retryCount,\n    'Posted At': finalStatus === 'Posted' ? new Date().toISOString() : (row['Posted At'] || ''),\n    'Scheduled DateTime': scheduledDateTime,\n    Error: errorNotes.join(' | '),\n    ...updatedStatuses,\n  },\n}];"
+      },
+      "id": "ad6e0c08-5a77-42e8-a6c3-6666116b66b6",
+      "name": "Interpret Result & Update Statuses",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "18e3ee57-8ae2-480a-8be5-03dbdeb80be7",
+      "name": "Loop Over Rows",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -224,
+        400
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "ea95a826-036b-4772-b7fa-5881b5829589",
+      "name": "Skipped - Already Running",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -1120,
+        592
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "14NFIyGUMg4hcTZ3hTIZklayVYstvxvpOesesgpEF72M",
+          "cachedResultName": "Content Calendar"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Untitled"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "Content ID"
+          ],
+          "schema": [
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Content ID",
+              "id": "Content ID",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Status",
+              "id": "Status",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Retry Count",
+              "id": "Retry Count",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Posted At",
+              "id": "Posted At",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Scheduled DateTime",
+              "id": "Scheduled DateTime",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Error",
+              "id": "Error",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Instagram Status",
+              "id": "Instagram Status",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Facebook Status",
+              "id": "Facebook Status",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "YouTube Status",
+              "id": "YouTube Status",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "LinkedIn Status",
+              "id": "LinkedIn Status",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Pinterest Status",
+              "id": "Pinterest Status",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Threads Status",
+              "id": "Threads Status",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "value": {
+            "Content ID": "={{ $json['Content ID'] }}",
+            "Error": "={{ $json.Error }}",
+            "Facebook Status": "={{ $json['Facebook Status'] }}",
+            "Instagram Status": "={{ $json['Instagram Status'] }}",
+            "LinkedIn Status": "={{ $json['LinkedIn Status'] }}",
+            "Pinterest Status": "={{ $json['Pinterest Status'] }}",
+            "Posted At": "={{ $json['Posted At'] }}",
+            "Retry Count": "={{ $json['Retry Count'] }}",
+            "Scheduled DateTime": "={{ $json['Scheduled DateTime'] }}",
+            "Status": "={{ $json.Status }}",
+            "Threads Status": "={{ $json['Threads Status'] }}",
+            "YouTube Status": "={{ $json['YouTube Status'] }}"
+          }
+        },
+        "resource": "sheet"
+      },
+      "id": "0fab793a-b62c-49ea-9734-57276ef5fc03",
+      "name": "Update Sheet Row",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1344,
+        192
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Oq7m04FSZnOikFQM",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.Status }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "rightValue": "Posted"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.Status }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "rightValue": "Failed"
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "id": "dfa2c83e-4d32-434c-8c48-712dea3c1da1",
+      "name": "Route by Final Status",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        1568,
+        176
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "move",
+        "fileId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Loop Over Rows').item.json['Drive File ID'] }}"
+        },
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1xHwsaNZv8gWv6lIY1eKO1oIkoQpXtN0a",
+          "cachedResultName": "Posted"
+        }
+      },
+      "id": "d57033db-f9a7-4153-9844-ea4cbb3f5178",
+      "name": "Move File to Posted Folder",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1792,
+        192
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "mnlFtfGT4KhdV6hA",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Content Calendar sheet columns\n\nContent ID | Drive File ID | Title | Caption | Platforms (comma-separated: instagram, facebook, youtube, linkedin, pinterest, threads) | Scheduled DateTime (ISO) | Status | Retry Count | Posted At | Error | Pinterest Board ID | Instagram Status | Facebook Status | YouTube Status | LinkedIn Status | Pinterest Status | Threads Status\n\nStatus lifecycle: Draft -> Pending Review -> Approved / Rejected (set by the separate \"Content Approval Requests\" workflow after a Gmail approval email to the admin) -> Posted / Retry Pending / Failed. This workflow only ever picks up rows already marked Approved or Retry Pending with a passed Scheduled DateTime - it does not send approval emails itself.",
+        "color": 5
+      },
+      "id": "f327f256-eb09-4cbf-840f-a3aa5a1e18f9",
+      "name": "Sticky Note 77b9df43",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -64,
+        592
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Control Data Table (concurrency lock)\n\n\"Control\" data table with columns Key / Value / LastUpdated, seeded with one row: Key=lock, Value=false. Wired into Check Lock / Acquire Lock / Release Lock below.\n\nEach run checks this before doing anything; if a previous run is still going, this run skips. Stale-lock recovery is built in: \"Lock Free?\" also treats the lock as free once LastUpdated is more than 30 minutes old, so a crashed run can't deadlock the schedule forever.",
+        "color": 4
+      },
+      "id": "5126c93d-1005-4d16-ba28-aa88dddfbdf5",
+      "name": "Sticky Note 18317acb",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -64,
+        848
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Known limitation to verify\n\nThis calls Postiz once per row with all target platforms in a single request. If that single call fails, ALL platforms attempted in it are marked Failed together. Check a real response after your first test.",
+        "color": 3
+      },
+      "id": "db5a0cad-70be-490a-8351-a9174fb8be92",
+      "name": "Sticky Note 0ffd2a7c",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -64,
+        1104
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Self-hosted Postiz\n\nFill in your real Postiz instance URLs on the three HTTP Request nodes (Get Postiz Integrations, Upload Media to Postiz, Create Postiz Post).",
+        "color": 3
+      },
+      "id": "16034cd0-b3c3-4f44-ae2a-4cb0eb57685f",
+      "name": "Sticky Note 5d82cbd6",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -64,
+        1360
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Archiving + failure alerts\n\nFully-posted rows move their source file to a \"Posted\" Drive folder. Rows that exhaust all 3 retries send an email alert to the admin via Gmail - Telegram has been removed from this workflow entirely.",
+        "color": 6
+      },
+      "id": "0a84c6dc-03d2-4a0c-aa84-b0ffc3e03e2a",
+      "name": "Sticky Note 58b725d0",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -64,
+        1616
+      ]
+    },
+    {
+      "id": "5cfa14a1-2716-42ff-ae35-521a9d117868",
+      "name": "Notify Admin (Failure)",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1792,
+        384
+      ],
+      "parameters": {
+        "emailType": "text",
+        "message": "={{ 'Content ID: ' + $json['Content ID'] + '\\nStatus: ' + $json.Status + '\\nRetry Count: ' + $json['Retry Count'] + '\\nScheduled DateTime: ' + $json['Scheduled DateTime'] + '\\n\\nDetails:\\n' + $json.Error + '\\n\\nCheck the Content Calendar sheet - if you fix the issue, reset Status to Approved to retry.' }}",
+        "operation": "send",
+        "options": {},
+        "resource": "message",
+        "sendTo": "vbllawchambers@gmail.com",
+        "subject": "={{ 'Post publishing issue - Content ID ' + $json['Content ID'] + ' (' + $json.Status + ')' }}"
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "BtQ6BCEFAX3Hahns",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "id": "ec71a73a-54f2-48eb-9da3-9404c8caa216",
+      "name": "Sticky Note - Approval Split",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -64,
+        1872
+      ],
+      "parameters": {
+        "color": 5,
+        "content": "## Human approval now happens in a separate workflow\n\nTelegram has been removed everywhere in this project. Approval is handled by a companion workflow, \"Content Approval Requests\": it watches for rows with Status = Pending Review, emails the admin via Gmail (Approve/Decline buttons, ~2 hour window) with the post details, and writes back Status = Approved or Rejected.\n\nThis workflow never sends approval emails itself. Set a row's Status to \"Pending Review\" in the sheet when it's ready for sign-off."
+      }
+    }
+  ],
+  "connections": {
+    "Every 5 Minutes": {
+      "main": [
+        [
+          {
+            "node": "Check Lock",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Lock": {
+      "main": [
+        [
+          {
+            "node": "Lock Free?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lock Free?": {
+      "main": [
+        [
+          {
+            "node": "Acquire Lock",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Skipped - Already Running",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Content Calendar Rows": {
+      "main": [
+        [
+          {
+            "node": "Due Rows (Approved or Retry Pending)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Release Lock": {
+      "main": [
+        [
+          {
+            "node": "All Due Posts Processed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Media": {
+      "main": [
+        [
+          {
+            "node": "Upload Media to Postiz",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload Media to Postiz": {
+      "main": [
+        [
+          {
+            "node": "Build Post Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Post Payload": {
+      "main": [
+        [
+          {
+            "node": "Has Posts To Send?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Posts To Send?": {
+      "main": [
+        [
+          {
+            "node": "Create Postiz Post",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Interpret Result & Update Statuses",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Postiz Post": {
+      "main": [
+        [
+          {
+            "node": "Interpret Result & Update Statuses",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Interpret Result & Update Statuses": {
+      "main": [
+        [
+          {
+            "node": "Update Sheet Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Rows": {
+      "main": [
+        [
+          {
+            "node": "Release Lock",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Download Media",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Sheet Row": {
+      "main": [
+        [
+          {
+            "node": "Route by Final Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Final Status": {
+      "main": [
+        [
+          {
+            "node": "Move File to Posted Folder",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notify Admin (Failure)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Over Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Move File to Posted Folder": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Acquire Lock": {
+      "main": [
+        [
+          {
+            "node": "Get Postiz Integrations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Postiz Integrations": {
+      "main": [
+        [
+          {
+            "node": "Get Content Calendar Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Due Rows (Approved or Retry Pending)": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Admin (Failure)": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "instanceId": "local-import"
+  }
+}
