@@ -21,7 +21,7 @@ export default function About() {
     {
       icon: Award,
       title: 'Experience',
-      description: 'With over 30 years of experience, we bring proven expertise to every case.',
+      description: 'With over 25 years of experience, we bring proven expertise to every case.',
     },
   ];
 
@@ -32,7 +32,7 @@ export default function About() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-5xl mb-4 font-bold tracking-tight">About Us</h1>
           <p className="text-xl text-slate-300 max-w-3xl leading-relaxed">
-            Sterling & Associates has been a trusted name in legal services for over three decades.
+            VBL LAW CHAMBERS has been a trusted name in legal services for over two decades.
           </p>
         </div>
       </section>
@@ -45,7 +45,7 @@ export default function About() {
               <h2 className="text-4xl mb-6 font-bold text-slate-900">Our Story</h2>
               <div className="space-y-4 text-slate-600 leading-relaxed">
                 <p>
-                  Founded in 1995, Sterling & Associates has grown from a small practice to one of the most respected law firms in the region. Our commitment to excellence and client satisfaction has remained unchanged throughout our journey.
+                  Founded in 1999, VBL LAW CHAMBERS, has grown from a small practice to one of the most respected law firms in the region. Our commitment to excellence and client satisfaction has remained unchanged throughout our journey.
                 </p>
                 <p>
                   We pride ourselves on providing personalized legal services that address the unique needs of each client. Our team of experienced attorneys brings a wealth of knowledge across multiple practice areas, ensuring comprehensive legal support.
@@ -103,7 +103,7 @@ export default function About() {
           <div className="text-center mb-12">
             <h2 className="text-4xl mb-4 font-bold text-slate-900">Awards & Recognition</h2>
             <p className="text-lg text-slate-600">
-              Our commitment to excellence has been recognized by leading legal organizations.
+              Our commitment to excellence has been recognized by leading legal organizations and client communities.
             </p>
           </div>
 
@@ -111,19 +111,19 @@ export default function About() {
             <div className="border border-slate-200 p-6 rounded-lg text-center shadow-sm">
               <div className="text-amber-600 text-3xl mb-2">★★★★★</div>
               <h3 className="text-xl mb-2 font-semibold text-slate-900">Top Rated Law Firm</h3>
-              <p className="text-slate-600 text-sm">Legal Excellence Awards 2024</p>
+              <p className="text-slate-600 text-sm">Legal Excellence Awards</p>
             </div>
 
             <div className="border border-slate-200 p-6 rounded-lg text-center shadow-sm">
               <div className="text-amber-600 text-3xl mb-2">🏆</div>
-              <h3 className="text-xl mb-2 font-semibold text-slate-900">Best Corporate Law Practice</h3>
-              <p className="text-slate-600 text-sm">Regional Business Journal 2023</p>
+              <h3 className="text-xl mb-2 font-semibold text-slate-900">Distinguished Legal Practice</h3>
+              <p className="text-slate-600 text-sm">Regional Bar Association</p>
             </div>
 
             <div className="border border-slate-200 p-6 rounded-lg text-center shadow-sm">
               <div className="text-amber-600 text-3xl mb-2">⚖️</div>
               <h3 className="text-xl mb-2 font-semibold text-slate-900">Outstanding Client Service</h3>
-              <p className="text-slate-600 text-sm">National Legal Review 2023</p>
+              <p className="text-slate-600 text-sm">Legal Excellence & Notary Practice</p>
             </div>
           </div>
         </div>

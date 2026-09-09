@@ -1,0 +1,12 @@
+{
+  "name": "vbl-law-chambers",
+  "version": "1.0.0",
+  "private": true,
+  "description": "VBL Law Chambers - Official Website & Legal Automation Platform",
+  "scripts": {
+    "build": "npm --prefix law-firm-website run build",
+    "dev": "npm --prefix law-firm-website run dev",
+    "start": "npm --prefix law-firm-website run preview",
+    "preview": "npm --prefix law-firm-website run preview"
+  }
+}

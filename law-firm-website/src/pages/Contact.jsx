@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MapPin, Phone, Mail, Clock, Send } from 'lucide-react';
+import { MapPin, Mail, Clock, Send, Award, CheckCircle } from 'lucide-react';
 
 export default function Contact() {
   const [formData, setFormData] = useState({
@@ -31,7 +31,7 @@ export default function Contact() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-5xl mb-4 font-bold tracking-tight">Contact Us</h1>
           <p className="text-xl text-slate-300 max-w-3xl leading-relaxed">
-            We're here to help. Reach out to schedule a consultation or learn more about our services.
+            Get in touch with our team for a free consultation. We're here to help with all your legal needs.
           </p>
         </div>
       </section>
@@ -40,12 +40,25 @@ export default function Contact() {
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-            {/* Left Column: Get in Touch */}
+            {/* Left Column: Get in Touch & Advocate Profile */}
             <div>
               <h2 className="text-3xl mb-4 font-bold text-slate-900">Get in Touch</h2>
               <p className="text-slate-600 mb-8 leading-relaxed">
-                Have a question or need legal assistance? Fill out the form or reach out to us directly.
+                We're available to answer your questions and discuss your legal needs. Reach out to us through any of the following channels.
               </p>
+
+              {/* Chambers Advocate Badge */}
+              <div className="bg-slate-50 border border-slate-200 rounded-lg p-5 mb-8">
+                <div className="flex items-center gap-2 text-amber-700 font-semibold mb-1 text-sm uppercase tracking-wide">
+                  <Award className="w-4 h-4" />
+                  <span>Advocate & Notary In-Charge</span>
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-1">V. Bhagya Lakshmi</h3>
+                <p className="text-xs text-amber-600 font-bold mb-2">B.Sc., B.L. — Advocate & Notary</p>
+                <p className="text-sm text-slate-600 leading-relaxed">
+                  Kavali, SPSR Nellore Dist., Andhra Pradesh.
+                </p>
+              </div>
 
               <div className="space-y-6">
                 {/* Location */}
@@ -55,24 +68,10 @@ export default function Contact() {
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-slate-900 mb-1">Office Location</h3>
-                    <p className="text-slate-600">
-                      123 Legal Avenue, Suite 500<br />
-                      New York, NY 10001
-                    </p>
-                  </div>
-                </div>
-
-                {/* Phone */}
-                <div className="flex items-start gap-4">
-                  <div className="bg-amber-100 p-3 rounded-lg flex-shrink-0">
-                    <Phone className="w-6 h-6 text-amber-600" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-slate-900 mb-1">Phone</h3>
-                    <p className="text-slate-600">
-                      <a href="tel:5551234567" className="hover:text-amber-600 transition-colors">
-                        (555) 123-4567
-                      </a>
+                    <p className="text-slate-600 leading-relaxed">
+                      H. No. 72, Brndavanam Colony,<br />
+                      Kavali, SPSR Nellore Dist.,<br />
+                      Andhra Pradesh - 524201
                     </p>
                   </div>
                 </div>
@@ -85,8 +84,8 @@ export default function Contact() {
                   <div>
                     <h3 className="text-lg font-semibold text-slate-900 mb-1">Email</h3>
                     <p className="text-slate-600">
-                      <a href="mailto:info@sterlinglaw.com" className="hover:text-amber-600 transition-colors">
-                        info@sterlinglaw.com
+                      <a href="mailto:vbllawchambers@gmail.com" className="hover:text-amber-600 transition-colors font-medium">
+                        vbllawchambers@gmail.com
                       </a>
                     </p>
                   </div>
@@ -117,11 +116,11 @@ export default function Contact() {
                 </h2>
 
                 {submitted ? (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
-                    <div className="text-green-600 text-5xl mb-4 font-bold">✓</div>
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-8 text-center">
+                    <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
                     <h3 className="text-2xl text-green-800 font-bold mb-2">Thank You!</h3>
-                    <p className="text-green-700">
-                      Your message has been received. We'll get back to you within 24 hours.
+                    <p className="text-green-700 text-lg">
+                      Your consultation request has been received. Our team at VBL Law Chambers will get back to you within 24 hours.
                     </p>
                   </div>
                 ) : (
@@ -138,7 +137,7 @@ export default function Contact() {
                           value={formData.name}
                           onChange={handleChange}
                           required
-                          placeholder="John Doe"
+                          placeholder="Your Full Name"
                         />
                       </div>
                       <div>
@@ -152,7 +151,7 @@ export default function Contact() {
                           value={formData.email}
                           onChange={handleChange}
                           required
-                          placeholder="john@example.com"
+                          placeholder="your.email@example.com"
                         />
                       </div>
                     </div>
@@ -168,12 +167,12 @@ export default function Contact() {
                           name="phone"
                           value={formData.phone}
                           onChange={handleChange}
-                          placeholder="(555) 123-4567"
+                          placeholder="+91 98765 43210"
                         />
                       </div>
                       <div>
                         <label htmlFor="subject" className="block text-sm font-semibold mb-2 text-slate-700">
-                          Subject *
+                          Subject / Matter *
                         </label>
                         <select
                           id="subject"
@@ -186,12 +185,12 @@ export default function Contact() {
                           <option value="corporate">Corporate Law</option>
                           <option value="criminal">Criminal Defense</option>
                           <option value="family">Family Law</option>
-                          <option value="real-estate">Real Estate</option>
-                          <option value="personal-injury">Personal Injury</option>
-                          <option value="employment">Employment Law</option>
-                          <option value="estate">Estate Planning</option>
-                          <option value="ip">Intellectual Property</option>
-                          <option value="other">Other</option>
+                          <option value="real-estate">Real Estate & Property Law</option>
+                          <option value="estate-planning">Estate Planning & Will Drafting</option>
+                          <option value="notary">Notary & Legal Documentation</option>
+                          <option value="civil">Civil & Commercial Litigation</option>
+                          <option value="motor-accidents">Personal Injury & MACT Claims</option>
+                          <option value="other">Other Legal Enquiry</option>
                         </select>
                       </div>
                     </div>
@@ -208,7 +207,7 @@ export default function Contact() {
                         required
                         rows={6}
                         className="resize-none"
-                        placeholder="Please describe your legal matter..."
+                        placeholder="Please describe your legal matter or enquiry..."
                       />
                     </div>
 
@@ -236,13 +235,32 @@ export default function Contact() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
             <h2 className="text-3xl mb-2 font-bold text-slate-900">Visit Our Office</h2>
-            <p className="text-slate-600">Conveniently located in the heart of the city</p>
+            <p className="text-slate-600">Conveniently located in Kavali, SPSR Nellore District, Andhra Pradesh</p>
           </div>
-          <div className="bg-slate-300 h-96 rounded-lg flex items-center justify-center shadow-inner border border-slate-300">
-            <div className="text-center text-slate-700">
-              <MapPin className="w-16 h-16 mx-auto mb-4 text-amber-600" />
-              <p className="text-xl font-semibold mb-1">Sterling & Associates Headquarters</p>
-              <p className="text-base text-slate-600">123 Legal Avenue, Suite 500, New York, NY 10001</p>
+          
+          <div className="bg-white rounded-lg shadow overflow-hidden border border-slate-200">
+            <div className="grid grid-cols-1 md:grid-cols-3">
+              <div className="p-8 bg-slate-900 text-white flex flex-col justify-center">
+                <MapPin className="w-10 h-10 text-amber-500 mb-4" />
+                <h3 className="text-2xl font-bold mb-2">VBL Law Chambers</h3>
+                <p className="text-slate-300 text-sm leading-relaxed mb-4">
+                  H. No. 72, Brndavanam Colony,<br />
+                  Kavali, SPSR Nellore Dist.,<br />
+                  Andhra Pradesh - 524201
+                </p>
+                <div className="pt-4 border-t border-slate-800 text-xs text-amber-400 font-medium">
+                  Jurisdiction: Kavali • Nellore • Kandukur • Singarayakonda
+                </div>
+              </div>
+              
+              <div className="md:col-span-2 h-96 relative bg-slate-200 flex items-center justify-center overflow-hidden">
+                <iframe
+                  title="VBL Law Chambers Office Location"
+                  className="w-full h-full border-0"
+                  loading="lazy"
+                  src="https://maps.google.com/maps?q=Kavali,+Andhra+Pradesh&t=&z=13&ie=UTF8&iwloc=&output=embed"
+                />
+              </div>
             </div>
           </div>
         </div>

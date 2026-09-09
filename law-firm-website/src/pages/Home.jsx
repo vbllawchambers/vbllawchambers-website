@@ -1,9 +1,9 @@
 import React from 'react';
-import { ArrowRight, Shield, Users, Award, Activity } from 'lucide-react';
+import { ArrowRight, Shield, Heart, Award, Home as HomeIcon, MapPin } from 'lucide-react';
 
 export default function Home({ onNavigate }) {
   const stats = [
-    { number: '30+', label: 'Years of Experience' },
+    { number: '25+', label: 'Years of Experience' },
     { number: '500+', label: 'Cases Won' },
     { number: '50+', label: 'Expert Attorneys' },
     { number: '98%', label: 'Client Satisfaction' },
@@ -11,12 +11,7 @@ export default function Home({ onNavigate }) {
 
   const featuredPracticeAreas = [
     {
-      icon: Shield,
-      title: 'Criminal Defense',
-      description: 'Expert defense for criminal charges with a proven track record of success.',
-    },
-    {
-      icon: Users,
+      icon: Heart,
       title: 'Family Law',
       description: 'Compassionate guidance through divorce, custody, and family matters.',
     },
@@ -26,9 +21,14 @@ export default function Home({ onNavigate }) {
       description: 'Strategic legal counsel for businesses of all sizes.',
     },
     {
-      icon: Activity,
-      title: 'Personal Injury',
-      description: 'Fighting for maximum compensation for injury victims.',
+      icon: HomeIcon,
+      title: 'Real Estate',
+      description: 'Complete real estate legal services for residential and commercial property transactions.',
+    },
+    {
+      icon: Shield,
+      title: 'Criminal Defense',
+      description: 'Expert defense for criminal charges with a proven track record of success.',
     },
   ];
 
@@ -48,11 +48,15 @@ export default function Home({ onNavigate }) {
         />
         <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-600/30 border border-amber-500/40 text-amber-300 text-sm font-medium mb-6">
+              <MapPin className="w-4 h-4" />
+              Serving Kavali, Nellore, Kandukur & Singarayakonda
+            </div>
             <h1 className="text-5xl md:text-6xl mb-6 font-bold tracking-tight">
               Your Trusted Legal Partner
             </h1>
             <p className="text-xl text-slate-300 mb-8 leading-relaxed">
-              With over 30 years of experience, we provide exceptional legal representation tailored to your unique needs.
+              With over 25 years of experience, we provide exceptional legal representation tailored to your unique needs.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <a
@@ -93,7 +97,10 @@ export default function Home({ onNavigate }) {
       <section className="py-20 bg-slate-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-4xl mb-4 font-bold text-slate-900">Our Practice Areas</h2>
+            <h2 className="text-4xl mb-2 font-bold text-slate-900">Our Practice Areas</h2>
+            <div className="inline-block bg-amber-100 text-amber-800 text-sm font-semibold px-4 py-1 rounded-full mb-4">
+              Kavali • Nellore • Kandukur • Singarayakonda
+            </div>
             <p className="text-lg text-slate-600 max-w-2xl mx-auto">
               We offer comprehensive legal services across multiple practice areas to meet all your legal needs.
             </p>
@@ -130,13 +137,13 @@ export default function Home({ onNavigate }) {
         </div>
       </section>
 
-      {/* Why Choose Us Section */}
+      {/* Why Choose VBL Law Chambers */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
               <h2 className="text-4xl mb-6 font-bold text-slate-900">
-                Why Choose Sterling & Associates?
+                Why Choose VBL Law Chambers?
               </h2>
               <div className="space-y-6">
                 <div>
@@ -177,7 +184,7 @@ export default function Home({ onNavigate }) {
             <div className="relative h-[500px] rounded-lg overflow-hidden shadow-xl">
               <img
                 src="https://images.unsplash.com/photo-1736939681295-bb2e6759dddc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBhdHRvcm5leSUyMHBvcnRyYWl0fGVufDF8fHx8MTc3MTk3OTc2NHww&ixlib=rb-4.1.0&q=80&w=1080"
-                alt="Professional Attorney"
+                alt="Professional Advocate"
                 className="w-full h-full object-cover"
               />
             </div>
@@ -185,7 +192,7 @@ export default function Home({ onNavigate }) {
         </div>
       </section>
 
-      {/* Ready to Get Started CTA Section */}
+      {/* Ready to Get Started CTA */}
       <section className="bg-slate-900 text-white py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-4xl mb-6 font-bold">Ready to Get Started?</h2>
