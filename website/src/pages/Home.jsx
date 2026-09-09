@@ -48,9 +48,9 @@ export default function Home({ onNavigate }) {
         />
         <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-600/30 border border-amber-500/40 text-amber-300 text-sm font-medium mb-6">
-              <MapPin className="w-4 h-4" />
-              Serving Kavali, Nellore, Kandukur & Singarayakonda
+            <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-amber-600/30 border border-amber-500/40 text-amber-300 text-xs sm:text-sm font-medium mb-6 backdrop-blur-sm">
+              <MapPin className="w-4 h-4 text-amber-400 flex-shrink-0" />
+              <span>Serving Kavali, Nellore, Kandukur & Singarayakonda</span>
             </div>
             <h1 className="text-5xl md:text-6xl mb-6 font-bold tracking-tight">
               Your Trusted Legal Partner
