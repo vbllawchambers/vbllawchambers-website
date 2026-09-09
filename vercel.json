@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "cd law-firm-website && npm install && npm run build",
-  "outputDirectory": "law-firm-website/dist",
+  "buildCommand": "cd website && npm install && npm run build",
+  "outputDirectory": "website/dist",
   "rewrites": [
     {
       "source": "/(.*)",

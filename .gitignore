@@ -2,11 +2,15 @@
 node_modules/
 **/node_modules/
 
-# Environment variables & secrets
+# Environment variables & secrets (CRITICAL)
 .env
+**/.env
 .env.*
+**/.env.*
 !.env.example
+!**/.env.example
 secrets/
+**/secrets/
 *.pem
 *.key
 

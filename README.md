@@ -9,96 +9,90 @@
 
 ---
 
-## 🌐 1. Public Law Firm Website (`law-firm-website/`)
+## 🗂️ Clean Repository Architecture
 
-The primary public-facing portal for VBL Law Chambers, replicated with 100% fidelity from the high-performance design specifications.
+The repository is organized into three primary, self-contained directories:
 
-### 🌟 Key Features:
+```text
+VBL-Law-Chambers/
+│
+├── 🌐 website/               # 🏛️ The Public Client-Facing Website (React + Vite SPA)
+│   ├── src/
+│   │   ├── components/       # Navbar (with official logo), Footer (with social links)
+│   │   ├── pages/            # Home, About, PracticeAreas, Attorneys, Contact
+│   │   ├── App.jsx           # Client router with smooth scrolling & popstate history
+│   │   └── index.css         # Styling, tokens, and responsive utilities
+│   ├── public/               # vbl_logo.jpeg, _redirects (SPA routing)
+│   ├── package.json          # React, Vite, Lucide dependencies
+│   ├── vite.config.js        # Vite configuration
+│   └── vercel.json           # SPA rewrite rules
+│
+├── 🤖 automation/            # ⚙️ Advocate Social Automation & Publishing Engine
+│   ├── web/                  # Internal video/content uploader portal & Express API
+│   ├── n8n/                  # Webhook ingestion, Google Drive sync & approval workflows
+│   ├── postiz-app-main/      # Multi-channel social scheduler (Instagram, YouTube, etc.)
+│   ├── docker-compose.yml    # Microservices stack (PostgreSQL, Redis, n8n, Postiz)
+│   ├── service-manager.ps1   # PowerShell service controller
+│   └── *.bat                 # 1-Click launcher scripts (start-all.bat, stop-all.bat)
+│
+├── 📚 docs/                  # 📖 Documentation, Design Archives & Verification
+│   ├── CONTROLLER_GUIDE.md   # Service controller guide
+│   └── figma_site_screenshots/ # Original design screenshots & verification captures
+│
+├── vercel.json               # 🚀 Root Vercel zero-config deployment
+├── netlify.toml              # 🚀 Root Netlify zero-config deployment
+├── package.json              # 🚀 Root build runner (`npm run build`)
+├── start-website.bat         # ⚡ 1-Click launcher for the public website
+└── README.md                 # 📖 Project documentation
+```
+
+---
+
+## 🌐 1. Public Website (`website/`)
+
+The official client-facing portal for VBL Law Chambers:
 - **5 Complete Routes**:
   - `/` — **Home**: Courtroom hero, 25+ years experience stats bar, 4 practice area highlights, "Why Choose VBL Law Chambers?", and CTA banner.
   - `/about` — **About Us**: Firm story (Founded in 1999), Mission & Vision, 4 Core Values, and Awards.
   - `/practice-areas` — **Practice Areas**: 8 complete legal practice areas (Corporate, Family, Real Estate, Will Drafting & Estate Planning, Criminal Defense, Civil Litigation, Motor Accidents, Notary).
-  - `/attorneys` — **Our Advocates**: Profiles led by **Smt. V. Bhagya Lakshmi (B.Sc., B.L., Advocate & Notary)** with areas of practice, credentials, and consultation contact.
+  - `/attorneys` — **Our Advocates**: Profiles led by **Smt. V. Bhagya Lakshmi (B.Sc., B.L., Advocate & Notary)** with credentials and consultation contact.
   - `/contact` — **Contact Us**: Direct office location in Kavali, office hours, interactive Free Consultation form with validation, and embedded Google map.
 - **Header & Footer**:
-  - Sticky navbar with brand badge, active link highlighting, and responsive mobile drawer menu.
-  - 4-column dark footer with direct links to official social media channels:
+  - Official 3D gold and navy emblem logo (`vbl_logo.jpeg`) integrated in header and footer.
+  - Direct links to official social channels:
     - 📷 **Instagram**: [@vbllawchambers](https://www.instagram.com/vbllawchambers/)
     - 📘 **Facebook**: [VBL Law Chambers](https://www.facebook.com/profile.php?id=61593945870418)
     - 🔴 **YouTube**: [@vbllawchambers](https://www.youtube.com/@vbllawchambers)
     - 🧵 **Threads**: [@vbllawchambers](https://www.threads.net/@vbllawchambers)
-- **Local Office**: H. No. 72, Brndavanam Colony, Kavali, SPSR Nellore Dist., Andhra Pradesh - 524201.
 
 ---
 
-## 🚀 Deploying the Website
+## 🚀 2. Deploying the Website
 
-This repository is pre-configured for instant zero-config deployment to **Vercel**, **Netlify**, or any modern static hosting provider.
+Because [`vercel.json`](./vercel.json), [`netlify.toml`](./netlify.toml), and [`package.json`](./package.json) are at the repository root pointing to `website/`, **you can deploy with zero configuration**:
 
-### Option A: Deploy to Vercel (Recommended)
-1. Go to [vercel.com](https://vercel.com) and click **Add New Project**.
-2. Select your repository: `csharikrishna/VBL-Law-Chambers`.
-3. Vercel will automatically read [`vercel.json`](./vercel.json) — **no manual build configuration is required!**
-4. Click **Deploy**.
+### Deploy to Vercel:
+1. Go to [vercel.com/new](https://vercel.com/new) and import `csharikrishna/VBL-Law-Chambers`.
+2. Vercel automatically detects `website/` from [`vercel.json`](./vercel.json).
+3. Click **Deploy**.
 
-### Option B: Deploy to Netlify
-1. Go to [netlify.com](https://netlify.com) and import `csharikrishna/VBL-Law-Chambers`.
-2. Netlify will automatically read [`netlify.toml`](./netlify.toml) and deploy the site with SPA redirect rules.
-3. Click **Deploy Site**.
-
-### Option C: Run Locally
+### Run Locally:
 Double-click [`start-website.bat`](./start-website.bat) or run:
 ```bash
-cd law-firm-website
-npm install
-npm run dev -- --port 5174
+npm run dev
 ```
-Then open [http://localhost:5174](http://localhost:5174) in your browser.
+Open [http://localhost:5174](http://localhost:5174) in your browser.
 
 ---
 
-## 🤖 2. Advocate Social Automation Suite
+## 🤖 3. Advocate Social Automation (`automation/`)
 
-In addition to the public website, this repository contains the automated social media publishing and workflow stack for advocates:
-
-| Component | Path | Description |
-|---|---|---|
-| **Content Uploader** | [`web/`](./web) | Advocate publishing portal for scheduling videos & legal awareness content |
-| **Workflow Engine** | [`n8n/`](./n8n) | Multi-platform webhook ingestion, Google Drive sync & approval workflows |
-| **Social Publisher** | [`postiz-app-main/`](./postiz-app-main) | Multi-channel social scheduler for Instagram, YouTube, Facebook, Threads |
-| **Service Controller** | [`service-manager.ps1`](./service-manager.ps1) | PowerShell controller to start/stop all services without orphaned processes |
-| **1-Click Starters** | [`start-all.bat`](./start-all.bat), [`stop-all.bat`](./stop-all.bat) | Rapid launch scripts for Docker, n8n, and Postiz |
+For advocates and internal team members scheduling legal awareness content:
+- Change directory to `automation/`.
+- Run `.\start-all.bat` to launch the Docker microservices stack, n8n workflows, and the content upload portal.
+- Refer to [`docs/CONTROLLER_GUIDE.md`](./docs/CONTROLLER_GUIDE.md) for full commands.
 
 ---
 
-## 📁 Repository Directory Structure
-
-```text
-VBL-Law-Chambers/
-├── law-firm-website/          # 🏛️ Primary Public React + Vite Website
-│   ├── src/
-│   │   ├── components/        # Navbar, Footer (with social links)
-│   │   ├── pages/             # Home, About, PracticeAreas, Attorneys, Contact
-│   │   ├── App.jsx            # SPA client router with smooth scrolling
-│   │   └── index.css          # Design system, tokens, and responsive utilities
-│   ├── public/                # Public assets and _redirects
-│   ├── package.json           # React, Vite, Lucide dependencies
-│   ├── vite.config.js         # Vite configuration
-│   └── vercel.json            # SPA rewrite rules
-├── figma_site_screenshots/    # 📸 Original high-resolution design archive & verification
-├── web/                       # 📤 Advocate Content Uploader & Express API Server
-├── n8n/                       # ⚡ Workflow automation blueprints & templates
-├── postiz-app-main/           # 📱 Social media publishing engine
-├── docker-compose.yml         # 🐳 Docker stack for local microservices
-├── vercel.json                # 🚀 Root Vercel deployment configuration
-├── netlify.toml               # 🚀 Root Netlify deployment configuration
-├── package.json               # 🚀 Root build runner
-├── start-website.bat          # ⚡ 1-Click launcher for the public website
-├── start-all.bat              # ⚡ 1-Click launcher for the entire automation stack
-└── README.md                  # 📖 Comprehensive documentation
-```
-
----
-
-## 🛡️ Security & Privacy Note
-Sensitive environment files (`.env`), Google client credentials, and authentication tokens are strictly ignored by [`.gitignore`](./.gitignore) and never tracked in version control.
+## 🛡️ Security
+Private keys, Google API tokens, and `.env` files are stored under `automation/secrets/` and `automation/.env` and are strictly protected by [`.gitignore`](./.gitignore).
