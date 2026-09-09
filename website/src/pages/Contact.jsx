@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { MapPin, Mail, Clock, Send, Award, CheckCircle } from 'lucide-react';
 
-export default function Contact() {
+export default function Contact({ onNavigate }) {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -224,7 +224,29 @@ export default function Contact() {
                     </button>
 
                     <p className="text-sm text-slate-500 text-center">
-                      By submitting this form, you agree to our privacy policy and consent to be contacted by our team.
+                      By submitting this form, you agree to our{' '}
+                      <a
+                        href="/privacy-policy"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (onNavigate) onNavigate('/privacy-policy');
+                        }}
+                        className="text-amber-600 hover:text-amber-700 underline underline-offset-2"
+                      >
+                        privacy policy
+                      </a>{' '}
+                      and{' '}
+                      <a
+                        href="/terms-of-service"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (onNavigate) onNavigate('/terms-of-service');
+                        }}
+                        className="text-amber-600 hover:text-amber-700 underline underline-offset-2"
+                      >
+                        terms of service
+                      </a>
+                      , and consent to be contacted by our team.
                     </p>
                   </form>
                 )}

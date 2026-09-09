@@ -6,11 +6,13 @@ import About from './pages/About';
 import PracticeAreas from './pages/PracticeAreas';
 import Attorneys from './pages/Attorneys';
 import Contact from './pages/Contact';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
 
 export default function App() {
   const getInitialPath = () => {
     const pathname = window.location.pathname;
-    if (['/about', '/practice-areas', '/attorneys', '/contact'].includes(pathname)) {
+    if (['/about', '/practice-areas', '/attorneys', '/contact', '/privacy-policy', '/terms-of-service'].includes(pathname)) {
       return pathname;
     }
     return '/';
@@ -44,6 +46,10 @@ export default function App() {
         return <Attorneys onNavigate={navigateTo} />;
       case '/contact':
         return <Contact onNavigate={navigateTo} />;
+      case '/privacy-policy':
+        return <PrivacyPolicy onNavigate={navigateTo} />;
+      case '/terms-of-service':
+        return <TermsOfService onNavigate={navigateTo} />;
       case '/':
       default:
         return <Home onNavigate={navigateTo} />;

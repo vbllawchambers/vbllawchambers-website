@@ -134,6 +134,24 @@ export default function Footer({ onNavigate }) {
                   Contact
                 </a>
               </li>
+              <li>
+                <a
+                  href="/privacy-policy"
+                  onClick={(e) => handleNavClick(e, '/privacy-policy')}
+                  className="text-slate-400 hover:text-amber-500 transition-colors"
+                >
+                  Privacy Policy
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/terms-of-service"
+                  onClick={(e) => handleNavClick(e, '/terms-of-service')}
+                  className="text-slate-400 hover:text-amber-500 transition-colors"
+                >
+                  Terms of Service
+                </a>
+              </li>
             </ul>
           </div>
 
@@ -214,8 +232,25 @@ export default function Footer({ onNavigate }) {
           </div>
         </div>
 
-        <div className="border-t border-slate-800 mt-8 pt-8 text-center text-sm text-slate-400">
+        <div className="border-t border-slate-800 mt-8 pt-8 flex flex-col sm:flex-row items-center justify-between text-sm text-slate-400 gap-4">
           <p>© {currentYear} VBL Law Chambers. All rights reserved.</p>
+          <div className="flex flex-wrap items-center gap-4 sm:gap-6">
+            <a
+              href="/privacy-policy"
+              onClick={(e) => handleNavClick(e, '/privacy-policy')}
+              className="text-slate-400 hover:text-amber-500 transition-colors"
+            >
+              Privacy Policy
+            </a>
+            <span className="text-slate-700 hidden sm:inline">•</span>
+            <a
+              href="/terms-of-service"
+              onClick={(e) => handleNavClick(e, '/terms-of-service')}
+              className="text-slate-400 hover:text-amber-500 transition-colors"
+            >
+              Terms of Service
+            </a>
+          </div>
         </div>
       </div>
     </footer>
