@@ -1,35 +1,42 @@
 import React from 'react';
-import { ArrowRight, Shield, Heart, Award, Home as HomeIcon, MapPin } from 'lucide-react';
+import { ArrowRight, Shield, Heart, Award, Home as HomeIcon, MapPin, CheckCircle, Scale } from 'lucide-react';
 
 export default function Home({ onNavigate }) {
   const stats = [
     { number: '25+', label: 'Years of Experience' },
-    { number: '500+', label: 'Cases Won' },
-    { number: '50+', label: 'Expert Attorneys' },
+    { number: '500+', label: 'Court Cases Handled' },
+    { number: '2,500+', label: 'Legal Consultations' },
     { number: '98%', label: 'Client Satisfaction' },
   ];
 
   const featuredPracticeAreas = [
     {
       icon: Heart,
-      title: 'Family Law',
-      description: 'Compassionate guidance through divorce, custody, and family matters.',
-    },
-    {
-      icon: Award,
-      title: 'Corporate Law',
-      description: 'Strategic legal counsel for businesses of all sizes.',
+      title: 'Family Law & Mediation',
+      description: 'Compassionate guidance and resolution through marital disputes, child custody, and family settlements.',
     },
     {
       icon: HomeIcon,
-      title: 'Real Estate',
-      description: 'Complete real estate legal services for residential and commercial property transactions.',
+      title: 'Real Estate & Property Law',
+      description: 'Comprehensive property title examination, registered sale deeds, and boundary dispute resolution.',
+    },
+    {
+      icon: Award,
+      title: 'Notary & Will Drafting',
+      description: 'Authorized Notary public attestation, testamentary wills, affidavits, and succession deeds.',
     },
     {
       icon: Shield,
-      title: 'Criminal Defense',
-      description: 'Expert defense for criminal charges with a proven track record of success.',
+      title: 'Criminal Defense & Bail',
+      description: 'Aggressive trial defense, anticipatory bail petitions, and statutory compliance representation.',
     },
+  ];
+
+  const courts = [
+    'Senior Civil Judge Court, Kavali',
+    'District & Sessions Court, Nellore',
+    'High Court of Andhra Pradesh',
+    'Motor Accident Claims Tribunal (MACT)',
   ];
 
   const handleNavigate = (path) => {
@@ -48,44 +55,66 @@ export default function Home({ onNavigate }) {
         />
         <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-600/30 border border-amber-500/40 text-amber-300 text-sm font-medium mb-6">
-              <MapPin className="w-4 h-4" />
-              Serving Kavali, Nellore, Kandukur & Singarayakonda
+            {/* Bilingual trust badge */}
+            <div className="flex flex-wrap items-center gap-2 mb-6">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-600/30 border border-amber-500/40 text-amber-300 text-xs font-semibold uppercase tracking-wider">
+                <MapPin className="w-3.5 h-3.5 text-amber-400" />
+                <span>Kavali • Nellore • Kandukur • Singarayakonda</span>
+              </div>
+              <div className="inline-flex items-center px-3 py-1 rounded-full bg-slate-800/80 border border-slate-700 text-slate-300 text-xs font-medium">
+                విశ్వసనీయ న్యాయ సేవలు — 25+ ఏళ్ల నిబద్ధత
+              </div>
             </div>
-            <h1 className="text-5xl md:text-6xl mb-6 font-bold tracking-tight">
-              Your Trusted Legal Partner
+
+            <h1 className="text-5xl md:text-6xl mb-6 font-bold tracking-tight leading-tight">
+              Your Trusted Legal Partner in Andhra Pradesh
             </h1>
             <p className="text-xl text-slate-300 mb-8 leading-relaxed">
-              With over 25 years of experience, we provide exceptional legal representation tailored to your unique needs.
+              With over 25 years of courtroom experience, <strong>VBL Law Chambers</strong> provides compassionate, confidential, and resolute legal representation led by founding advocate <strong>Smt. V. Bhagya Lakshmi (B.Sc., B.L., Advocate & Notary)</strong>.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col sm:flex-row gap-4 mb-10">
               <a
                 href="/contact"
                 onClick={(e) => { e.preventDefault(); handleNavigate('/contact'); }}
-                className="inline-flex items-center justify-center bg-amber-600 hover:bg-amber-700 text-white px-8 py-4 rounded text-lg font-medium transition-colors"
+                className="inline-flex items-center justify-center bg-amber-600 hover:bg-amber-700 text-white px-8 py-4 rounded-lg text-lg font-semibold transition-colors shadow-lg"
               >
-                Free Consultation
+                Schedule Free Consultation
                 <ArrowRight className="ml-2 w-5 h-5" />
               </a>
               <a
                 href="/practice-areas"
                 onClick={(e) => { e.preventDefault(); handleNavigate('/practice-areas'); }}
-                className="inline-flex items-center justify-center border-2 border-white hover:bg-white hover:text-slate-900 text-white px-8 py-4 rounded text-lg font-medium transition-colors"
+                className="inline-flex items-center justify-center border-2 border-white hover:bg-white hover:text-slate-900 text-white px-8 py-4 rounded-lg text-lg font-semibold transition-colors"
               >
-                Our Services
+                Our Practice Areas
               </a>
+            </div>
+
+            {/* Jurisdiction Chips */}
+            <div className="pt-6 border-t border-slate-700/60">
+              <div className="text-xs uppercase tracking-wider text-amber-400 font-semibold mb-2 flex items-center gap-1.5">
+                <Scale className="w-3.5 h-3.5" />
+                <span>Courts of Practice</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {courts.map((court, idx) => (
+                  <span key={idx} className="bg-slate-800/80 border border-slate-700 text-slate-300 text-xs px-2.5 py-1 rounded-md">
+                    {court}
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       {/* Stats Bar */}
-      <section className="bg-amber-600 py-12">
+      <section className="bg-amber-600 py-12 shadow-inner">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {stats.map((stat, idx) => (
               <div key={idx} className="text-center text-white">
-                <div className="text-4xl md:text-5xl font-bold mb-2">{stat.number}</div>
+                <div className="text-4xl md:text-5xl font-extrabold mb-1">{stat.number}</div>
                 <div className="text-sm md:text-base text-amber-100 font-medium">{stat.label}</div>
               </div>
             ))}
@@ -102,7 +131,7 @@ export default function Home({ onNavigate }) {
               Kavali • Nellore • Kandukur • Singarayakonda
             </div>
             <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-              We offer comprehensive legal services across multiple practice areas to meet all your legal needs.
+              We offer comprehensive legal representation across civil, criminal, family, property, and notary matters.
             </p>
           </div>
 
@@ -112,7 +141,7 @@ export default function Home({ onNavigate }) {
               return (
                 <div
                   key={idx}
-                  className="bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow border border-slate-200"
+                  className="bg-white p-6 rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-200 hover:-translate-y-1"
                 >
                   <div className="bg-amber-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
                     <Icon className="w-6 h-6 text-amber-600" />
@@ -130,7 +159,7 @@ export default function Home({ onNavigate }) {
               onClick={(e) => { e.preventDefault(); handleNavigate('/practice-areas'); }}
               className="inline-flex items-center text-amber-600 hover:text-amber-700 font-semibold text-lg"
             >
-              View All Practice Areas
+              View All 8 Practice Areas
               <ArrowRight className="ml-2 w-5 h-5" />
             </a>
           </div>
@@ -142,51 +171,71 @@ export default function Home({ onNavigate }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
+              <div className="inline-block bg-amber-100 text-amber-800 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-4">
+                Personalized Legal Counsel
+              </div>
               <h2 className="text-4xl mb-6 font-bold text-slate-900">
                 Why Choose VBL Law Chambers?
               </h2>
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-xl mb-2 text-amber-600 font-semibold">Experienced Professionals</h3>
-                  <p className="text-slate-600">
-                    Our team of attorneys brings decades of combined experience across multiple practice areas.
+                  <h3 className="text-xl mb-2 text-amber-600 font-semibold flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5 text-amber-600" />
+                    <span>Direct Senior Advocate Representation</span>
+                  </h3>
+                  <p className="text-slate-600 leading-relaxed">
+                    Your matter is personally analyzed and represented by founding advocate Smt. V. Bhagya Lakshmi with 25+ years of litigation experience—never passed to inexperienced juniors.
                   </p>
                 </div>
                 <div>
-                  <h3 className="text-xl mb-2 text-amber-600 font-semibold">Client-Focused Approach</h3>
-                  <p className="text-slate-600">
-                    We prioritize your needs and work tirelessly to achieve the best possible outcome for your case.
+                  <h3 className="text-xl mb-2 text-amber-600 font-semibold flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5 text-amber-600" />
+                    <span>Client-Focused & Compassionate Approach</span>
+                  </h3>
+                  <p className="text-slate-600 leading-relaxed">
+                    We understand the emotional and financial strain of court cases. We offer clear, transparent advice and seek prompt resolution through trial or mediation.
                   </p>
                 </div>
                 <div>
-                  <h3 className="text-xl mb-2 text-amber-600 font-semibold">Proven Track Record</h3>
-                  <p className="text-slate-600">
-                    With hundreds of successful cases, we have established ourselves as leaders in the legal field.
+                  <h3 className="text-xl mb-2 text-amber-600 font-semibold flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5 text-amber-600" />
+                    <span>Proven 25-Year Courtroom Track Record</span>
+                  </h3>
+                  <p className="text-slate-600 leading-relaxed">
+                    Over hundreds of successful civil decrees, family settlements, property title clears, and bail orders across Kavali and Nellore district courts.
                   </p>
                 </div>
                 <div>
-                  <h3 className="text-xl mb-2 text-amber-600 font-semibold">Personalized Service</h3>
-                  <p className="text-slate-600">
-                    Every case is unique, and we tailor our approach to meet your specific circumstances and goals.
+                  <h3 className="text-xl mb-2 text-amber-600 font-semibold flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5 text-amber-600" />
+                    <span>Government Authorized Notary Services</span>
+                  </h3>
+                  <p className="text-slate-600 leading-relaxed">
+                    Seamless one-stop legal services: litigation, agreement drafting, and statutory notarization under one trusted roof.
                   </p>
                 </div>
               </div>
               <a
                 href="/about"
                 onClick={(e) => { e.preventDefault(); handleNavigate('/about'); }}
-                className="inline-flex items-center mt-8 bg-slate-900 text-white hover:bg-slate-800 px-8 py-3 rounded text-base font-medium transition-colors"
+                className="inline-flex items-center mt-8 bg-slate-900 text-white hover:bg-slate-800 px-8 py-3 rounded-lg text-base font-semibold transition-colors shadow"
               >
-                Learn More About Us
+                Learn More About Our Chambers
                 <ArrowRight className="ml-2 w-4 h-4" />
               </a>
             </div>
 
-            <div className="relative h-[500px] rounded-lg overflow-hidden shadow-xl">
+            <div className="relative h-[500px] rounded-2xl overflow-hidden shadow-2xl border-2 border-slate-100">
               <img
                 src="https://images.unsplash.com/photo-1736939681295-bb2e6759dddc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBhdHRvcm5leSUyMHBvcnRyYWl0fGVufDF8fHx8MTc3MTk3OTc2NHww&ixlib=rb-4.1.0&q=80&w=1080"
-                alt="Professional Advocate"
+                alt="VBL Law Chambers Advocate"
                 className="w-full h-full object-cover"
               />
+              <div className="absolute bottom-4 left-4 right-4 bg-slate-900/90 backdrop-blur-sm p-4 rounded-xl text-white border border-amber-500/30">
+                <div className="text-xs text-amber-400 font-bold uppercase tracking-wider">VBL Law Chambers, Kavali</div>
+                <div className="text-sm font-semibold">Smt. V. Bhagya Lakshmi, B.Sc., B.L.</div>
+                <div className="text-xs text-slate-300">Advocate & Notary Public (Est. 1999)</div>
+              </div>
             </div>
           </div>
         </div>
@@ -195,16 +244,16 @@ export default function Home({ onNavigate }) {
       {/* Ready to Get Started CTA */}
       <section className="bg-slate-900 text-white py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl mb-6 font-bold">Ready to Get Started?</h2>
-          <p className="text-xl text-slate-300 mb-8">
-            Schedule a free consultation with one of our experienced attorneys today.
+          <h2 className="text-4xl mb-6 font-bold">Need Legal Advice or Notary Services?</h2>
+          <p className="text-xl text-slate-300 mb-8 max-w-2xl mx-auto">
+            Schedule a confidential consultation with Advocate V. Bhagya Lakshmi today.
           </p>
           <a
             href="/contact"
             onClick={(e) => { e.preventDefault(); handleNavigate('/contact'); }}
-            className="inline-flex items-center bg-amber-600 hover:bg-amber-700 text-white px-8 py-4 rounded text-lg font-medium transition-colors"
+            className="inline-flex items-center bg-amber-600 hover:bg-amber-700 text-white px-8 py-4 rounded-lg text-lg font-semibold transition-colors shadow-lg"
           >
-            Contact Us Today
+            Book Free Consultation
             <ArrowRight className="ml-2 w-5 h-5" />
           </a>
         </div>
