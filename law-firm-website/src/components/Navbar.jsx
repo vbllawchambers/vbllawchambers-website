@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Scale, Menu, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 
 export default function Navbar({ currentPath, onNavigate }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -30,14 +30,20 @@ export default function Navbar({ currentPath, onNavigate }) {
           <a
             href="/"
             onClick={(e) => { e.preventDefault(); handleNavClick('/'); }}
-            className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+            className="flex items-center gap-3.5 hover:opacity-90 transition-opacity"
           >
-            <div className="bg-amber-600 p-2.5 rounded-lg shadow-sm">
-              <Scale className="w-6 h-6 text-white" />
-            </div>
+            <img
+              src="/vbl_logo.jpeg"
+              alt="VBL Law Chambers Emblem"
+              className="h-12 w-12 rounded-full object-cover border border-amber-500/50 shadow-md ring-2 ring-amber-400/20"
+            />
             <div>
-              <div className="text-xl tracking-tight font-bold text-white uppercase">VBL LAW CHAMBERS</div>
-              <div className="text-xs text-amber-500 font-medium">Advocates & Legal Consultants</div>
+              <div className="text-xl tracking-tight font-bold text-white uppercase leading-tight">
+                VBL LAW CHAMBERS
+              </div>
+              <div className="text-xs text-amber-500 font-semibold tracking-wide">
+                Advocates & Legal Consultants
+              </div>
             </div>
           </a>
 

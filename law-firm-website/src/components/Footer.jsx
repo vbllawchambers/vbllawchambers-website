@@ -1,5 +1,5 @@
 import React from 'react';
-import { Scale, Facebook, Instagram, Youtube, MapPin, Mail, AtSign } from 'lucide-react';
+import { Facebook, Instagram, Youtube, MapPin, Mail } from 'lucide-react';
 
 export default function Footer({ onNavigate }) {
   const currentYear = new Date().getFullYear();
@@ -15,11 +15,20 @@ export default function Footer({ onNavigate }) {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Column 1: Brand & Social Media */}
           <div>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="bg-amber-600 p-2 rounded">
-                <Scale className="w-5 h-5 text-white" />
+            <div className="flex items-center gap-3 mb-4">
+              <img
+                src="/vbl_logo.jpeg"
+                alt="VBL Law Chambers Emblem"
+                className="h-12 w-12 rounded-full object-cover border border-amber-500/50 shadow-md ring-2 ring-amber-400/20"
+              />
+              <div>
+                <span className="text-lg font-bold tracking-tight text-white uppercase block leading-tight">
+                  VBL LAW CHAMBERS
+                </span>
+                <span className="text-xs text-amber-500 font-semibold tracking-wide">
+                  Advocates & Legal Consultants
+                </span>
               </div>
-              <span className="text-lg font-bold tracking-tight text-white uppercase">VBL LAW CHAMBERS</span>
             </div>
             <p className="text-slate-400 text-sm leading-relaxed mb-6">
               Providing exceptional legal services with integrity, dedication, and expertise for over 25 years.
