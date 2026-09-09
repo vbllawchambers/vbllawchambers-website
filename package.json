@@ -4,7 +4,7 @@
   "private": true,
   "description": "VBL Law Chambers - Official Website & Legal Automation Platform",
   "scripts": {
-    "build": "npm --prefix website run build",
+    "build": "npm --prefix website install && npm --prefix website run build && node -e \"require('fs').cpSync('website/dist', 'dist', {recursive: true})\"",
     "dev": "npm --prefix website run dev",
     "start": "npm --prefix website run preview",
     "preview": "npm --prefix website run preview"
