@@ -11,7 +11,7 @@ param (
 
 $RootPath = $PSScriptRoot
 $WebPath = Join-Path $RootPath "web"
-$PidFile = Join-Path $WebPath ".web-portal.pid"
+$LegacyPidFile = Join-Path $WebPath ".web-portal.pid"
 
 function Write-BrandHeader {
     Write-Host ""
@@ -79,42 +79,37 @@ function Ensure-DockerRunning {
     }
 }
 
-function Stop-WebPortalProcesses {
+function Clear-LegacyWebPortalProcesses {
+    # The web portal now runs as the 'advocate-web-portal' container and is managed
+    # by Docker Compose. This only cleans up stragglers from the old raw
+    # `npm run dev` model (host processes on 3300/5173) so they can't shadow
+    # the containerized portal by holding its port.
     param ([switch]$Quiet)
 
-    if (-not $Quiet) {
-        Write-Host "[1/2] Stopping Web Portal and API background services..." -ForegroundColor Cyan
-    }
-
-    # Check PID file
-    if (Test-Path $PidFile) {
-        $savedPid = (Get-Content $PidFile -ErrorAction SilentlyContinue)
+    if (Test-Path $LegacyPidFile) {
+        $savedPid = (Get-Content $LegacyPidFile -ErrorAction SilentlyContinue)
         if ($savedPid) {
-            $trimmedPid = $savedPid.Trim()
-            Stop-Process -Id $trimmedPid -Force -ErrorAction SilentlyContinue
+            Stop-Process -Id $savedPid.Trim() -Force -ErrorAction SilentlyContinue
         }
-        Remove-Item $PidFile -Force -ErrorAction SilentlyContinue
+        Remove-Item $LegacyPidFile -Force -ErrorAction SilentlyContinue
     }
 
-    # Clean up processes listening on port 3300 and 5173
-    $ports = @(3300, 5173)
-    foreach ($p in $ports) {
+    foreach ($p in @(3300, 5173)) {
         $conns = Get-NetTCPConnection -LocalPort $p -State Listen -ErrorAction SilentlyContinue
         if ($conns) {
             $pidsToKill = $conns | Select-Object -ExpandProperty OwningProcess -Unique
             foreach ($procId in $pidsToKill) {
-                if ($procId -gt 0) {
+                # Docker's port proxy owns the port for containerized services -
+                # only reap real node.exe leftovers from the legacy dev workflow.
+                $proc = Get-Process -Id $procId -ErrorAction SilentlyContinue
+                if ($procId -gt 0 -and $proc -and $proc.ProcessName -eq 'node') {
                     Stop-Process -Id $procId -Force -ErrorAction SilentlyContinue
                     if (-not $Quiet) {
-                        Write-Host "  -> Terminated process on port $p (PID: $procId)." -ForegroundColor DarkGray
+                        Write-Host "  -> Cleared legacy host process on port $p (PID: $procId)." -ForegroundColor DarkGray
                     }
                 }
             }
         }
-    }
-
-    if (-not $Quiet) {
-        Write-Host "  -> Web Portal and API stopped cleanly." -ForegroundColor Green
     }
 }
 
@@ -125,33 +120,34 @@ function Start-Services {
 
     # 1. Docker
     $dockerOk = Ensure-DockerRunning
-    if ($dockerOk) {
-        Write-Host ""
-        Write-Host "[2/3] Launching Docker Compose Stack (n8n + Postiz + Postgres + Redis)..." -ForegroundColor Cyan
-        Push-Location $RootPath
-        & docker compose up -d
-        Pop-Location
-        Write-Host "  -> Docker containers started in background." -ForegroundColor Green
-    } else {
-        Write-Host "  -> Skipping Docker Compose because Docker daemon is offline." -ForegroundColor DarkYellow
+    if (-not $dockerOk) {
+        Write-Host "  -> Cannot continue: Docker daemon is offline." -ForegroundColor Red
+        return
     }
 
-    # 2. Web Portal (React + Express API)
+    # 2. Clear any leftovers from the old non-containerized web portal
     Write-Host ""
-    Write-Host "[3/3] Launching Web Publishing Portal and Express API..." -ForegroundColor Cyan
-    Stop-WebPortalProcesses -Quiet
+    Write-Host "[2/3] Clearing legacy host processes (pre-container web portal)..." -ForegroundColor Cyan
+    Clear-LegacyWebPortalProcesses
+    Write-Host "  -> Clear." -ForegroundColor Green
 
-    Push-Location $WebPath
-    $job = Start-Process "npm.cmd" -ArgumentList "run", "dev" -WorkingDirectory $WebPath -PassThru -WindowStyle Hidden
-    if ($job) {
-        $job.Id | Out-File -FilePath $PidFile -Encoding ASCII -Force
-        Write-Host "  -> Web portal service launched (PID: $($job.Id))." -ForegroundColor Green
-    }
+    # 3. Entire stack, web portal included, through Docker Compose
+    Write-Host ""
+    Write-Host "[3/3] Launching full stack (Web Portal + n8n + Postiz + Temporal + DBs)..." -ForegroundColor Cyan
+    Push-Location $RootPath
+    & docker compose up -d --build
+    $composeExit = $LASTEXITCODE
     Pop-Location
 
+    if ($composeExit -eq 0) {
+        Write-Host "  -> All containers started." -ForegroundColor Green
+    } else {
+        Write-Host "  -> docker compose exited with code $composeExit. Check output above." -ForegroundColor Red
+    }
+
     Write-Host ""
-    Write-Host "Waiting 4 seconds for services to initialize..." -ForegroundColor DarkGray
-    Start-Sleep -Seconds 4
+    Write-Host "Waiting 8 seconds for services to initialize..." -ForegroundColor DarkGray
+    Start-Sleep -Seconds 8
 
     Show-Status
 }
@@ -161,12 +157,14 @@ function Stop-Services {
     Write-Host "Stopping all automation services gracefully..." -ForegroundColor Yellow
     Write-Host ""
 
-    # 1. Stop Web Portal
-    Stop-WebPortalProcesses
+    # 1. Clear leftovers from the old non-containerized web portal
+    Write-Host "[1/2] Clearing legacy host processes (pre-container web portal)..." -ForegroundColor Cyan
+    Clear-LegacyWebPortalProcesses
+    Write-Host "  -> Clear." -ForegroundColor Green
 
-    # 2. Stop Docker Compose
+    # 2. Stop the whole stack, web portal included
     Write-Host ""
-    Write-Host "[2/2] Stopping Docker Containers (n8n, Postiz, Temporal, Postgres, Redis)..." -ForegroundColor Cyan
+    Write-Host "[2/2] Stopping all containers (Web Portal, n8n, Postiz, Temporal, Postgres, Redis)..." -ForegroundColor Cyan
     if (Test-DockerDaemon) {
         Push-Location $RootPath
         & docker compose stop
@@ -211,9 +209,9 @@ function Show-Status {
     Write-Host "--- ACTIVE SERVICE HEALTH ---" -ForegroundColor Yellow
     Write-Host ""
 
-    $null = Test-Endpoint -Name "Web Portal (React Vite)" -Url "http://localhost:5173"
-    $null = Test-Endpoint -Name "Web Portal (Express API)" -Url "http://localhost:3300/api/health"
-    $null = Test-Endpoint -Name "Postiz Social Publisher" -Url "http://localhost:4500"
+    $null = Test-Endpoint -Name "Advocate Content Portal" -Url "http://localhost:3300"
+    $null = Test-Endpoint -Name "Content Portal API"      -Url "http://localhost:3300/api/health"
+    $null = Test-Endpoint -Name "Postiz Social Publisher" -Url "http://localhost:4800"
     $null = Test-Endpoint -Name "n8n Workflow Automation" -Url "http://localhost:5678"
     $null = Test-Endpoint -Name "Temporal Workflow UI"   -Url "http://localhost:8080"
 
@@ -228,9 +226,8 @@ function Show-Status {
     Write-Host ""
     Write-Host "======================================================================" -ForegroundColor DarkCyan
     Write-Host " Quick Access Links:" -ForegroundColor Yellow
-    Write-Host "  - Content Publisher: http://localhost:5173" -ForegroundColor White
-    Write-Host "  - Express API:       http://localhost:3300" -ForegroundColor White
-    Write-Host "  - Postiz Manager:    http://localhost:4500" -ForegroundColor White
+    Write-Host "  - Content Publisher: http://localhost:3300" -ForegroundColor White
+    Write-Host "  - Postiz Manager:    http://localhost:4800" -ForegroundColor White
     Write-Host "  - n8n Automations:   http://localhost:5678" -ForegroundColor White
     Write-Host "======================================================================" -ForegroundColor DarkCyan
     Write-Host ""

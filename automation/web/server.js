@@ -34,10 +34,12 @@ const upload = multer({
 
 // Helper to make resilient requests to n8n
 async function sendToN8n(endpoint, options = {}) {
+  // Docker service name first: it resolves instantly inside the compose network,
+  // and fails fast with ENOTFOUND on the host so the localhost fallbacks still work.
   const urls = [
+    `${N8N_INTERNAL_URL}${endpoint}`,
     `http://127.0.0.1:5678${endpoint}`,
     `http://localhost:5678${endpoint}`,
-    `${N8N_INTERNAL_URL}${endpoint}`,
     `${N8N_EXTERNAL_URL}${endpoint}`
   ];
 

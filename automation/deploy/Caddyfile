@@ -1,0 +1,91 @@
+# =============================================================================
+# VBL Law Chambers — Advocate Social Automation Stack
+# Caddy reverse proxy (automatic Let's Encrypt SSL)
+#
+# Usage on the VPS:
+#   1. Point these DNS A records at the server IP:
+#        app.vbllawchambers.com
+#        postiz.vbllawchambers.com
+#        n8n.vbllawchambers.com
+#   2. Put this file at /etc/caddy/Caddyfile
+#   3. sudo caddy validate --config /etc/caddy/Caddyfile
+#      sudo systemctl reload caddy
+#
+# Caddy provisions and renews certificates automatically — no certbot needed.
+# Replace the email below with a real address for expiry notices.
+# =============================================================================
+{
+	email admin@vbllawchambers.com
+}
+
+# --- Shared security headers -------------------------------------------------
+(security_headers) {
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "geolocation=(), microphone=(), camera=()"
+		-Server
+	}
+}
+
+# --- Content Portal (React dashboard + Express API, single port) -------------
+app.vbllawchambers.com {
+	import security_headers
+	encode gzip zstd
+
+	# Media uploads run up to 250MB (see multer limit in web/server.js)
+	request_body {
+		max_size 250MB
+	}
+
+	reverse_proxy localhost:3300
+}
+
+# --- Postiz social scheduling engine -----------------------------------------
+postiz.vbllawchambers.com {
+	import security_headers
+	encode gzip zstd
+
+	request_body {
+		max_size 250MB
+	}
+
+	# Postiz serves its frontend and /api/* backend through its own nginx on 5000,
+	# published to the host on 4800.
+	reverse_proxy localhost:4800
+}
+
+# --- n8n workflow engine -----------------------------------------------------
+n8n.vbllawchambers.com {
+	import security_headers
+	encode gzip zstd
+
+	request_body {
+		max_size 250MB
+	}
+
+	# Caddy proxies WebSockets automatically (needed for the n8n editor push
+	# channel at /rest/push) — no extra upgrade directives required.
+	reverse_proxy localhost:5678 {
+		# n8n editor pushes can idle; keep the connection open longer than default.
+		transport http {
+			read_timeout 3600s
+		}
+	}
+}
+
+# --- Temporal UI (OPTIONAL — internal ops dashboard) --------------------------
+# Temporal has no authentication of its own. Only expose it publicly if you add
+# an auth layer, otherwise reach it over an SSH tunnel:
+#   ssh -L 8080:localhost:8080 user@your-vps
+#
+# temporal.vbllawchambers.com {
+# 	import security_headers
+# 	basic_auth {
+# 		# generate with: caddy hash-password
+# 		admin <BCRYPT_HASH_HERE>
+# 	}
+# 	reverse_proxy localhost:8080
+# }

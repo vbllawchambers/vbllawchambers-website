@@ -28,10 +28,11 @@ VBL-Law-Chambers/
 │   └── vercel.json           # SPA rewrite rules
 │
 ├── 🤖 automation/            # ⚙️ Advocate Social Automation & Publishing Engine
-│   ├── web/                  # Internal video/content uploader portal & Express API
+│   ├── web/                  # Internal uploader portal & Express API (containerized)
 │   ├── n8n/                  # Webhook ingestion, Google Drive sync & approval workflows
-│   ├── postiz-app-main/      # Multi-channel social scheduler (Instagram, YouTube, etc.)
-│   ├── docker-compose.yml    # Microservices stack (PostgreSQL, Redis, n8n, Postiz)
+│   ├── temporal/             # Temporal dynamicconfig for the Postiz scheduling engine
+│   ├── deploy/               # Caddyfile / nginx.conf reverse-proxy templates for VPS
+│   ├── docker-compose.yml    # Microservices stack (PostgreSQL, Redis, n8n, Postiz, Temporal)
 │   ├── service-manager.ps1   # PowerShell service controller
 │   └── *.bat                 # 1-Click launcher scripts (start-all.bat, stop-all.bat)
 │

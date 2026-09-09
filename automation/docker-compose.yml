@@ -1,4 +1,31 @@
+name: advocate-social-automation
+
 services:
+  # =================================================================
+  # Advocate Content Portal (React dashboard + Express API)
+  # Express serves the built React bundle and the API on one port (3300).
+  # =================================================================
+  advocate-web-portal:
+    build:
+      context: ./web
+    container_name: advocate-web-portal
+    restart: always
+    ports:
+      - "${WEB_PORT:-3300}:3300"
+    environment:
+      - NODE_ENV=production
+      - WEB_PORT=3300
+      - N8N_INTERNAL_URL=http://n8n-automation:5678
+      - N8N_EXTERNAL_URL=http://n8n-automation:5678
+      - POSTIZ_API_URL=http://postiz:5000
+      - POSTIZ_API_KEY=${POSTIZ_API_KEY:-}
+      - TZ=${TZ:-Asia/Kolkata}
+    depends_on:
+      - n8n
+    networks:
+      - advocate-network
+      - postiz-network
+
   # =================================================================
   # n8n Workflow Automation Engine
   # =================================================================
@@ -41,9 +68,9 @@ services:
     restart: always
     environment:
       # === Core Settings
-      MAIN_URL: ${POSTIZ_MAIN_URL:-http://localhost:4007}
-      FRONTEND_URL: ${POSTIZ_FRONTEND_URL:-http://localhost:4007}
-      NEXT_PUBLIC_BACKEND_URL: ${POSTIZ_BACKEND_URL:-http://localhost:4007/api}
+      MAIN_URL: ${POSTIZ_MAIN_URL:-http://localhost:4800}
+      FRONTEND_URL: ${POSTIZ_FRONTEND_URL:-http://localhost:4800}
+      NEXT_PUBLIC_BACKEND_URL: ${POSTIZ_BACKEND_URL:-http://localhost:4800/api}
       JWT_SECRET: ${POSTIZ_JWT_SECRET:-advocate-kavali-postiz-jwt-secret-key-32chars-min-2026}
       DATABASE_URL: ${DATABASE_URL:-postgresql://postiz-user:postiz-password@postiz-postgres:5432/postiz-db-local}
       REDIS_URL: ${REDIS_URL:-redis://postiz-redis:6379}
@@ -83,7 +110,7 @@ services:
       - postiz-config:/config/
       - postiz-uploads:/uploads/
     ports:
-      - "${POSTIZ_PORT:-4007}:5000"
+      - "${POSTIZ_PORT:-4800}:5000"
     networks:
       - postiz-network
       - temporal-network
@@ -92,6 +119,15 @@ services:
         condition: service_healthy
       postiz-redis:
         condition: service_healthy
+    # Postiz boots nginx immediately but its NestJS backend needs 1-3 minutes to
+    # start listening on :3000. Without this, compose reports "Started" while the
+    # API still returns 502. Only 'node' exists in this image (no curl/wget/nc).
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/public/v1/is-connected').then(r=>process.exit(r.status<500?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 90s
 
   postiz-postgres:
     image: postgres:17-alpine
@@ -131,6 +167,7 @@ services:
   temporal-elasticsearch:
     container_name: temporal-elasticsearch
     image: elasticsearch:7.17.27
+    restart: always
     environment:
       - cluster.routing.allocation.disk.threshold_enabled=true
       - cluster.routing.allocation.disk.watermark.low=512mb
@@ -145,10 +182,17 @@ services:
       - 9200
     volumes:
       - temporal-es-data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD", "curl", "-s", "http://localhost:9200"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 60s
 
   temporal-postgresql:
     container_name: temporal-postgresql
     image: postgres:16-alpine
+    restart: always
     environment:
       POSTGRES_PASSWORD: temporal
       POSTGRES_USER: temporal
@@ -158,15 +202,23 @@ services:
       - 5432
     volumes:
       - temporal-pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: pg_isready -U temporal
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   temporal:
     container_name: temporal
+    restart: always
     ports:
       - '7233:7233'
     image: temporalio/auto-setup:1.28.1
     depends_on:
-      - temporal-postgresql
-      - temporal-elasticsearch
+      temporal-postgresql:
+        condition: service_healthy
+      temporal-elasticsearch:
+        condition: service_healthy
     environment:
       - DB=postgres12
       - DB_PORT=5432
@@ -181,14 +233,17 @@ services:
     networks:
       - temporal-network
     volumes:
-      - ./postiz-app-main/dynamicconfig:/etc/temporal/config/dynamicconfig
+      - ./temporal/dynamicconfig:/etc/temporal/config/dynamicconfig
 
   temporal-ui:
     container_name: temporal-ui
     image: temporalio/ui:2.34.0
+    restart: always
     environment:
       - TEMPORAL_ADDRESS=temporal:7233
-      - TEMPORAL_CORS_ORIGINS=http://127.0.0.1:3000
+      # Origin the Temporal UI is actually browsed from. Override with the real
+      # subdomain (e.g. https://temporal.vbllawchambers.com) on a VPS deployment.
+      - TEMPORAL_CORS_ORIGINS=${TEMPORAL_CORS_ORIGINS:-http://localhost:8080}
     networks:
       - temporal-network
     ports:

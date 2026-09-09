@@ -20,6 +20,10 @@ dist/
 build/
 .output/
 
+# Upstream Postiz source clone — Postiz runs from the prebuilt ghcr.io image.
+# Only dynamicconfig/ was ever used, and it now lives in automation/temporal/dynamicconfig/.
+automation/postiz-app-main/
+
 # Logs & caches
 *.log
 npm-debug.log*

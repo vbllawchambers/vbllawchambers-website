@@ -221,7 +221,7 @@
     },
     {
       "parameters": {
-        "url": "http://postiz:5000/public/v1/integrations",
+        "url": "http://postiz:5000/api/public/v1/integrations",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "options": {}
@@ -354,7 +354,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://postiz:5000/public/v1/upload",
+        "url": "http://postiz:5000/api/public/v1/upload",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
@@ -434,7 +434,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://postiz:5000/public/v1/posts",
+        "url": "http://postiz:5000/api/public/v1/posts",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
