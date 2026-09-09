@@ -3,6 +3,14 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
+      "source": "/privacy-policy",
+      "destination": "/privacy-policy.html"
+    },
+    {
+      "source": "/terms-of-service",
+      "destination": "/terms-of-service.html"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
