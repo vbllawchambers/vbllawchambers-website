@@ -13,6 +13,32 @@ $RootPath = $PSScriptRoot
 $WebPath = Join-Path $RootPath "web"
 $LegacyPidFile = Join-Path $WebPath ".web-portal.pid"
 
+# --- Public URLs come from .env so there are no hardcoded hostnames here.
+# Switching to production domains is a .env change only.
+function Get-EnvValue {
+    param ([string]$Key, [string]$Default)
+
+    $envFile = Join-Path $RootPath ".env"
+    if (Test-Path $envFile) {
+        foreach ($line in Get-Content $envFile) {
+            $trimmed = $line.Trim()
+            if ($trimmed -and -not $trimmed.StartsWith('#') -and $trimmed.Contains('=')) {
+                $idx = $trimmed.IndexOf('=')
+                if ($trimmed.Substring(0, $idx).Trim() -eq $Key) {
+                    $value = $trimmed.Substring($idx + 1).Trim()
+                    if ($value) { return $value.TrimEnd('/') }
+                }
+            }
+        }
+    }
+    return $Default
+}
+
+$WebPortalUrl  = Get-EnvValue -Key "WEB_PORTAL_PUBLIC_URL"  -Default "http://localhost:3300"
+$PostizUrl     = Get-EnvValue -Key "POSTIZ_PUBLIC_URL"      -Default "http://localhost:4800"
+$N8nUrl        = Get-EnvValue -Key "N8N_PUBLIC_URL"         -Default "http://localhost:5678"
+$TemporalUiUrl = Get-EnvValue -Key "TEMPORAL_UI_PUBLIC_URL" -Default "http://localhost:8080"
+
 function Write-BrandHeader {
     Write-Host ""
     Write-Host "======================================================================" -ForegroundColor DarkCyan
@@ -209,11 +235,11 @@ function Show-Status {
     Write-Host "--- ACTIVE SERVICE HEALTH ---" -ForegroundColor Yellow
     Write-Host ""
 
-    $null = Test-Endpoint -Name "Advocate Content Portal" -Url "http://localhost:3300"
-    $null = Test-Endpoint -Name "Content Portal API"      -Url "http://localhost:3300/api/health"
-    $null = Test-Endpoint -Name "Postiz Social Publisher" -Url "http://localhost:4800"
-    $null = Test-Endpoint -Name "n8n Workflow Automation" -Url "http://localhost:5678"
-    $null = Test-Endpoint -Name "Temporal Workflow UI"   -Url "http://localhost:8080"
+    $null = Test-Endpoint -Name "Advocate Content Portal" -Url $WebPortalUrl
+    $null = Test-Endpoint -Name "Content Portal API"      -Url "$WebPortalUrl/api/health"
+    $null = Test-Endpoint -Name "Postiz Social Publisher" -Url $PostizUrl
+    $null = Test-Endpoint -Name "n8n Workflow Automation" -Url $N8nUrl
+    $null = Test-Endpoint -Name "Temporal Workflow UI"    -Url $TemporalUiUrl
 
     Write-Host ""
     Write-Host "--- DOCKER CONTAINER STATUS ---" -ForegroundColor Yellow
@@ -226,9 +252,10 @@ function Show-Status {
     Write-Host ""
     Write-Host "======================================================================" -ForegroundColor DarkCyan
     Write-Host " Quick Access Links:" -ForegroundColor Yellow
-    Write-Host "  - Content Publisher: http://localhost:3300" -ForegroundColor White
-    Write-Host "  - Postiz Manager:    http://localhost:4800" -ForegroundColor White
-    Write-Host "  - n8n Automations:   http://localhost:5678" -ForegroundColor White
+    Write-Host "  - Content Publisher: $WebPortalUrl" -ForegroundColor White
+    Write-Host "  - Postiz Manager:    $PostizUrl" -ForegroundColor White
+    Write-Host "  - n8n Automations:   $N8nUrl" -ForegroundColor White
+    Write-Host "  - Temporal UI:       $TemporalUiUrl" -ForegroundColor White
     Write-Host "======================================================================" -ForegroundColor DarkCyan
     Write-Host ""
 }

@@ -47,3 +47,8 @@ Thumbs.db
 # Confidential Client Docs & Agreements
 docs/
 *.docx
+
+# Media test assets - content belongs in Google Drive, not the repo
+*.mp4
+*.mov
+*.webm
