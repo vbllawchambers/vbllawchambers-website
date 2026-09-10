@@ -255,9 +255,17 @@ export default function Footer({ onNavigate }) {
             <a
               href="/terms-of-service"
               onClick={(e) => handleNavClick(e, '/terms-of-service')}
-              className="text-slate-400 hover:text-amber-500 transition-colors"
+              className="text-slate-400 hover:text-amber-400 transition-colors"
             >
               Terms of Service
+            </a>
+            <span className="text-slate-700 hidden sm:inline">•</span>
+            <a
+              href="/chambers-portal"
+              onClick={(e) => handleNavClick(e, '/chambers-portal')}
+              className="text-slate-500 hover:text-amber-400 transition-colors"
+            >
+              Chambers Portal
             </a>
           </div>
         </div>

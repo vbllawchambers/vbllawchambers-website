@@ -1,0 +1,116 @@
+{
+  "id": "WillDocumentIngestion01",
+  "name": "Will Document Ingestion & Chambers Alert",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "will-submission",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": false
+        }
+      },
+      "id": "webhook-will-trigger",
+      "name": "Will Submission Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -900,
+        300
+      ],
+      "webhookId": "will-submission-webhook-id"
+    },
+    {
+      "parameters": {
+        "operation": "upload",
+        "fileContent": "data",
+        "name": "={{ ($json.body.refId || 'Will_Submission') + '_' + ($binary.document_0 ? $binary.document_0.fileName : 'Document.pdf') }}",
+        "parents": [
+          "1Q171pLkFgucgHO0bJ1lRWlxC3en-tHZz"
+        ],
+        "options": {}
+      },
+      "id": "upload-will-to-drive",
+      "name": "Upload Will Document to Google Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -660,
+        300
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "mnlFtfGT4KhdV6hA",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $('Will Submission Webhook').item.json.body || $('Will Submission Webhook').item.json;\nconst driveFile = $('Upload Will Document to Google Drive').item.json;\n\nconst now = new Date();\nconst dateStr = now.toISOString();\n\nconst refId = body.refId || ('VBL-' + Math.floor(100000 + Math.random() * 900000));\nconst fullName = body.fullName || 'Anonymous Client';\nconst phone = body.phone || '';\nconst email = body.email || '';\nconst serviceType = body.serviceType || 'draft_new';\nconst city = body.city || 'Kavali';\nconst driveUrl = driveFile.webViewLink || ('https://drive.google.com/file/d/' + driveFile.id + '/view');\n\nreturn [{\n  json: {\n    refId,\n    fullName,\n    phone,\n    email,\n    serviceType,\n    city,\n    dateStr,\n    driveUrl,\n    status: 'New Submission',\n    alertSubject: '⚖️ New Will Submission: ' + fullName + ' (' + refId + ')',\n    alertBody: 'A new confidential will drafting submission has been received.\\n\\n' +\n      'Client: ' + fullName + '\\n' +\n      'Phone: ' + phone + '\\n' +\n      'Email: ' + email + '\\n' +\n      'City: ' + city + '\\n' +\n      'Service: ' + serviceType + '\\n' +\n      'Google Drive Document: ' + driveUrl + '\\n\\n' +\n      'Chambers Portal: https://vbllawchambers.com/chambers-portal'\n  }\n}];"
+      },
+      "id": "format-submission-data",
+      "name": "Format Submission Record",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -420,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"refId\": \"{{ $json.refId }}\",\n  \"driveUrl\": \"{{ $json.driveUrl }}\",\n  \"message\": \"Document received and stored in Google Drive successfully.\"\n}",
+        "options": {}
+      },
+      "id": "respond-to-portal",
+      "name": "Respond to Web Portal",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        -180,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Will Submission Webhook": {
+      "main": [
+        [
+          {
+            "node": "Upload Will Document to Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload Will Document to Google Drive": {
+      "main": [
+        [
+          {
+            "node": "Format Submission Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Submission Record": {
+      "main": [
+        [
+          {
+            "node": "Respond to Web Portal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

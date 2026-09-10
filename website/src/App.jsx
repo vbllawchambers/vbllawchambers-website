@@ -7,6 +7,7 @@ import PracticeAreas from './pages/PracticeAreas';
 import Attorneys from './pages/Attorneys';
 import Contact from './pages/Contact';
 import WillSubmission from './pages/WillSubmission';
+import AdminPortal from './pages/AdminPortal';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
 import { Analytics } from '@vercel/analytics/react';
@@ -33,6 +34,14 @@ const ROUTE_METADATA = {
     title: 'Online Will Submission & Testamentary Planning | VBL Law Chambers',
     description: 'Confidential online will submission, testament scrutiny, codicil drafting, and estate planning with authorized Advocates & Notaries in Kavali, AP.',
   },
+  '/chambers-portal': {
+    title: 'Chambers Portal | VBL Law Chambers',
+    description: 'Secure management console for authorized advocates at VBL Law Chambers.',
+  },
+  '/admin': {
+    title: 'Chambers Portal | VBL Law Chambers',
+    description: 'Secure management console for authorized advocates at VBL Law Chambers.',
+  },
   '/contact': {
     title: 'Contact VBL Law Chambers | Kavali, SPSR Nellore District',
     description: 'Schedule a confidential legal consultation with VBL Law Chambers at Brndavanam Colony, Kavali, SPSR Nellore Dist., Andhra Pradesh.',
@@ -50,7 +59,7 @@ const ROUTE_METADATA = {
 export default function App() {
   const getInitialPath = () => {
     const pathname = window.location.pathname;
-    if (['/about', '/practice-areas', '/attorneys', '/contact', '/will-submission', '/privacy-policy', '/terms-of-service'].includes(pathname)) {
+    if (['/about', '/practice-areas', '/attorneys', '/contact', '/will-submission', '/admin', '/chambers-portal', '/privacy-policy', '/terms-of-service'].includes(pathname)) {
       return pathname;
     }
     return '/';
@@ -102,6 +111,9 @@ export default function App() {
         return <Contact onNavigate={navigateTo} />;
       case '/will-submission':
         return <WillSubmission onNavigate={navigateTo} />;
+      case '/chambers-portal':
+      case '/admin':
+        return <AdminPortal onNavigate={navigateTo} />;
       case '/privacy-policy':
         return <PrivacyPolicy onNavigate={navigateTo} />;
       case '/terms-of-service':
@@ -111,6 +123,18 @@ export default function App() {
         return <Home onNavigate={navigateTo} />;
     }
   };
+
+  const isAdminRoute = currentPath === '/admin' || currentPath === '/chambers-portal';
+
+  if (isAdminRoute) {
+    return (
+      <div className="min-h-screen bg-slate-100 text-slate-900">
+        <AdminPortal onNavigate={navigateTo} />
+        <Analytics />
+        <SpeedInsights />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-slate-900">
