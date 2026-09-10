@@ -16,17 +16,92 @@ const app = express();
 // PORT is injected by hosts like Render and must win; WEB_PORT is the local
 // docker-compose setting.
 const PORT = process.env.PORT || process.env.WEB_PORT || 3300;
+const ADMIN_SECRET_KEY = process.env.ADMIN_SECRET_KEY || 'vbl2026';
 
 // n8n Webhook URLs
 const N8N_INTERNAL_URL = process.env.N8N_INTERNAL_URL || 'http://n8n-automation:5678';
 const N8N_EXTERNAL_URL = process.env.N8N_EXTERNAL_URL || 'http://localhost:5678';
 
-app.use(cors());
+// Security Headers: Block Search Engine Crawlers & Prevent Clickjacking
+app.use((req, res, next) => {
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  next();
+});
+
+// Permissive CORS for chambers domains and localhost
+const allowedOrigins = [
+  'https://vbllawchambers.com',
+  'https://www.vbllawchambers.com',
+  'https://admin.vbllawchambers.com',
+  'https://portal.vbllawchambers.com',
+  'http://localhost:3300',
+  'http://localhost:5173'
+];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.onrender.com') || origin.endsWith('.vbllawchambers.com')) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Permissive for initial setup
+    }
+  },
+  credentials: true
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Serve built React assets in production
 app.use(express.static(path.join(__dirname, 'dist')));
+
+// Authentication Verification Middleware
+function requireAdminAuth(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const customKeyHeader = req.headers['x-admin-key'];
+
+  let providedKey = customKeyHeader;
+  if (!providedKey && authHeader && authHeader.startsWith('Bearer ')) {
+    try {
+      const decoded = Buffer.from(authHeader.substring(7), 'base64').toString('utf-8');
+      providedKey = decoded;
+    } catch {
+      providedKey = authHeader.substring(7);
+    }
+  }
+
+  if (providedKey && providedKey.trim() === ADMIN_SECRET_KEY.trim()) {
+    return next();
+  }
+
+  return res.status(401).json({
+    success: false,
+    error: 'Unauthorized',
+    message: 'Valid chambers admin authentication token or secret key required.'
+  });
+}
+
+// Auth API: Authenticate with chambers master passkey
+app.post('/api/auth/login', (req, res) => {
+  const { passcode } = req.body;
+  if (!passcode) {
+    return res.status(400).json({ success: false, message: 'Passcode is required.' });
+  }
+
+  if (passcode.trim() === ADMIN_SECRET_KEY.trim()) {
+    const token = Buffer.from(passcode.trim()).toString('base64');
+    return res.json({ success: true, token });
+  }
+
+  return res.status(401).json({ success: false, message: 'Invalid chambers passcode.' });
+});
+
+// Auth API: Verify token validity
+app.get('/api/auth/verify', requireAdminAuth, (req, res) => {
+  res.json({ success: true, authenticated: true });
+});
 
 // Configure Multer for in-memory upload buffering (up to 250MB for video)
 const upload = multer({
@@ -73,8 +148,8 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Fetch all posts from Google Sheet via n8n
-app.get('/api/posts', async (req, res) => {
+// Fetch all posts from Google Sheet via n8n (Protected)
+app.get('/api/posts', requireAdminAuth, async (req, res) => {
   try {
     const data = await sendToN8n('/webhook/content-list', { method: 'GET' });
     return res.json(data);
@@ -88,8 +163,8 @@ app.get('/api/posts', async (req, res) => {
   }
 });
 
-// Upload media & schedule post
-app.post('/api/upload', upload.single('file'), async (req, res) => {
+// Upload media & schedule post (Protected)
+app.post('/api/upload', requireAdminAuth, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({

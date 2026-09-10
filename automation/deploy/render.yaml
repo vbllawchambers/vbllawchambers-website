@@ -68,6 +68,8 @@ services:
           property: hostport
       - key: POSTIZ_API_KEY
         sync: false              # set in dashboard; unused once Postiz is gone
+      - key: ADMIN_SECRET_KEY
+        sync: false              # set master chambers secret passkey in Render dashboard
 
   # ---------------------------------------------------------------------------
   # n8n — workflow engine. Postgres-backed because free tier has no disk.

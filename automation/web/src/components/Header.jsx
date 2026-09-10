@@ -1,5 +1,5 @@
 import React from 'react';
-import { Scale, Table, Folder } from 'lucide-react';
+import { Scale, Table, Folder, LogOut } from 'lucide-react';
 
 const STATUS_COPY = {
   checking: { label: 'Checking…', className: 'status-checking' },
@@ -7,7 +7,7 @@ const STATUS_COPY = {
   offline: { label: 'Pipeline Unreachable', className: 'status-offline' }
 };
 
-export default function Header({ pipelineStatus = 'checking' }) {
+export default function Header({ pipelineStatus = 'checking', onLogout }) {
   const { label, className } = STATUS_COPY[pipelineStatus] || STATUS_COPY.checking;
 
   return (
@@ -48,6 +48,19 @@ export default function Header({ pipelineStatus = 'checking' }) {
             <Folder size={15} />
             <span className="btn-secondary-label">Drive Folder</span>
           </a>
+          {onLogout && (
+            <button
+              type="button"
+              onClick={onLogout}
+              className="btn-secondary"
+              id="btn-logout"
+              title="Lock Chambers Session"
+              style={{ cursor: 'pointer' }}
+            >
+              <LogOut size={15} />
+              <span className="btn-secondary-label">Lock</span>
+            </button>
+          )}
         </div>
       </div>
     </header>

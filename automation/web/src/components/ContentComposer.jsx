@@ -177,6 +177,11 @@ export default function ContentComposer({ onUploadSuccess, onToast }) {
     const xhr = new XMLHttpRequest();
     xhr.open('POST', '/api/upload', true);
 
+    const token = sessionStorage.getItem('vbl_admin_token');
+    if (token) {
+      xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+    }
+
     xhr.upload.onprogress = (event) => {
       if (event.lengthComputable) {
         const percent = Math.round((event.loaded / event.total) * 90);
