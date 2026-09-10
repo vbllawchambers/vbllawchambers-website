@@ -9,6 +9,7 @@ import Contact from './pages/Contact';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
 import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 export default function App() {
   const getInitialPath = () => {
@@ -65,6 +66,7 @@ export default function App() {
       </main>
       <Footer onNavigate={navigateTo} />
       <Analytics />
+      <SpeedInsights />
     </div>
   );
 }
