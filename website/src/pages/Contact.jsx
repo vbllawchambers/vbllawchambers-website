@@ -48,18 +48,18 @@ export default function Contact({ onNavigate }) {
               </p>
 
               {/* Chambers Advocate Badge */}
-              <div className="bg-white border border-slate-200 border-l-4 border-l-amber-600 rounded-xl p-5 sm:p-6 mb-8 shadow-sm">
+              <div className="bg-white border border-slate-200 border-l-4 border-l-amber-700 rounded-xl p-5 sm:p-6 mb-8 shadow-sm">
                 <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold uppercase tracking-wider mb-2.5">
-                  <Award className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
+                  <Award className="w-3.5 h-3.5 text-amber-700 flex-shrink-0" />
                   <span>Advocate & Notary In-Charge</span>
                 </div>
                 <h3 className="text-xl font-bold text-slate-900 mb-1">V. Bhagya Lakshmi</h3>
                 <div className="flex flex-wrap items-center gap-2 mb-2.5">
-                  <span className="bg-amber-600 text-white text-xs font-bold px-2 py-0.5 rounded">B.Sc., B.L.</span>
-                  <span className="text-xs text-amber-700 font-semibold">Advocate & Notary</span>
+                  <span className="bg-amber-700 text-white text-xs font-bold px-2 py-0.5 rounded">B.Sc., B.L.</span>
+                  <span className="text-xs text-amber-800 font-semibold">Advocate & Notary</span>
                 </div>
                 <div className="pt-2.5 border-t border-slate-100 flex items-center gap-1.5 text-xs text-slate-600">
-                  <MapPin className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
+                  <MapPin className="w-3.5 h-3.5 text-amber-700 flex-shrink-0" />
                   <span>Kavali, SPSR Nellore Dist., Andhra Pradesh.</span>
                 </div>
               </div>
@@ -67,8 +67,8 @@ export default function Contact({ onNavigate }) {
               <div className="space-y-4">
                 {/* Location */}
                 <div className="flex items-start gap-4 p-3.5 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-colors">
-                  <div className="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <MapPin className="w-5 h-5 text-amber-600" />
+                  <div className="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-700 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <MapPin className="w-5 h-5 text-amber-700" />
                   </div>
                   <div>
                     <h3 className="text-base font-semibold text-slate-900 mb-1">Office Location</h3>
@@ -82,13 +82,13 @@ export default function Contact({ onNavigate }) {
 
                 {/* Email */}
                 <div className="flex items-start gap-4 p-3.5 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-colors">
-                  <div className="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Mail className="w-5 h-5 text-amber-600" />
+                  <div className="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-700 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Mail className="w-5 h-5 text-amber-700" />
                   </div>
                   <div>
                     <h3 className="text-base font-semibold text-slate-900 mb-1">Email</h3>
                     <p className="text-sm text-slate-600">
-                      <a href="mailto:vbllawchambers@gmail.com" className="hover:text-amber-600 transition-colors font-medium">
+                      <a href="mailto:vbllawchambers@gmail.com" className="hover:text-amber-700 transition-colors font-medium">
                         vbllawchambers@gmail.com
                       </a>
                     </p>
@@ -97,8 +97,8 @@ export default function Contact({ onNavigate }) {
 
                 {/* Office Hours */}
                 <div className="flex items-start gap-4 p-3.5 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-colors">
-                  <div className="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Clock className="w-5 h-5 text-amber-600" />
+                  <div className="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-700 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Clock className="w-5 h-5 text-amber-700" />
                   </div>
                   <div>
                     <h3 className="text-base font-semibold text-slate-900 mb-1">Office Hours</h3>
@@ -217,7 +217,7 @@ export default function Contact({ onNavigate }) {
 
                     <button
                       type="submit"
-                      className="w-full bg-amber-600 hover:bg-amber-700 text-white px-8 py-4 rounded-lg text-lg font-medium transition-colors flex items-center justify-center gap-2 cursor-pointer border-0"
+                      className="w-full bg-amber-700 hover:bg-amber-800 text-white px-8 py-4 rounded-lg text-lg font-medium transition-colors flex items-center justify-center gap-2 cursor-pointer border-0"
                     >
                       <Send className="w-5 h-5" />
                       Send Message
@@ -231,7 +231,7 @@ export default function Contact({ onNavigate }) {
                           e.preventDefault();
                           if (onNavigate) onNavigate('/privacy-policy');
                         }}
-                        className="text-amber-600 hover:text-amber-700 underline underline-offset-2"
+                        className="text-amber-700 hover:text-amber-800 underline underline-offset-2"
                       >
                         privacy policy
                       </a>{' '}
@@ -242,7 +242,7 @@ export default function Contact({ onNavigate }) {
                           e.preventDefault();
                           if (onNavigate) onNavigate('/terms-of-service');
                         }}
-                        className="text-amber-600 hover:text-amber-700 underline underline-offset-2"
+                        className="text-amber-700 hover:text-amber-800 underline underline-offset-2"
                       >
                         terms of service
                       </a>

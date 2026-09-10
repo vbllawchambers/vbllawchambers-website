@@ -86,7 +86,7 @@ export default function About() {
               return (
                 <div key={idx} className="bg-white p-6 rounded-lg shadow-md text-center border border-slate-200">
                   <div className="bg-amber-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Icon className="w-8 h-8 text-amber-600" />
+                    <Icon className="w-8 h-8 text-amber-700" />
                   </div>
                   <h3 className="text-xl mb-3 font-semibold text-slate-900">{val.title}</h3>
                   <p className="text-slate-600 text-sm leading-relaxed">{val.description}</p>
@@ -109,19 +109,19 @@ export default function About() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="border border-slate-200 p-6 rounded-lg text-center shadow-sm">
-              <div className="text-amber-600 text-3xl mb-2">★★★★★</div>
+              <div className="text-amber-700 text-3xl mb-2">★★★★★</div>
               <h3 className="text-xl mb-2 font-semibold text-slate-900">Top Rated Law Firm</h3>
               <p className="text-slate-600 text-sm">Legal Excellence Awards</p>
             </div>
 
             <div className="border border-slate-200 p-6 rounded-lg text-center shadow-sm">
-              <div className="text-amber-600 text-3xl mb-2">🏆</div>
+              <div className="text-amber-700 text-3xl mb-2">🏆</div>
               <h3 className="text-xl mb-2 font-semibold text-slate-900">Distinguished Legal Practice</h3>
               <p className="text-slate-600 text-sm">Regional Bar Association</p>
             </div>
 
             <div className="border border-slate-200 p-6 rounded-lg text-center shadow-sm">
-              <div className="text-amber-600 text-3xl mb-2">⚖️</div>
+              <div className="text-amber-700 text-3xl mb-2">⚖️</div>
               <h3 className="text-xl mb-2 font-semibold text-slate-900">Outstanding Client Service</h3>
               <p className="text-slate-600 text-sm">Legal Excellence & Notary Practice</p>
             </div>

@@ -62,7 +62,7 @@ export default function Home({ onNavigate }) {
               <a
                 href="/contact"
                 onClick={(e) => { e.preventDefault(); handleNavigate('/contact'); }}
-                className="inline-flex items-center justify-center bg-amber-600 hover:bg-amber-700 text-white px-8 py-4 rounded text-lg font-medium transition-colors"
+                className="inline-flex items-center justify-center bg-amber-700 hover:bg-amber-800 text-white px-8 py-4 rounded text-lg font-medium transition-colors"
               >
                 Free Consultation
                 <ArrowRight className="ml-2 w-5 h-5" />
@@ -80,7 +80,7 @@ export default function Home({ onNavigate }) {
       </section>
 
       {/* Stats Bar */}
-      <section className="bg-amber-600 py-12">
+      <section className="bg-amber-700 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {stats.map((stat, idx) => (
@@ -147,25 +147,25 @@ export default function Home({ onNavigate }) {
               </h2>
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-xl mb-2 text-amber-600 font-semibold">Experienced Professionals</h3>
+                  <h3 className="text-xl mb-2 text-amber-800 font-semibold">Experienced Professionals</h3>
                   <p className="text-slate-600">
                     Our team of attorneys brings decades of combined experience across multiple practice areas.
                   </p>
                 </div>
                 <div>
-                  <h3 className="text-xl mb-2 text-amber-600 font-semibold">Client-Focused Approach</h3>
+                  <h3 className="text-xl mb-2 text-amber-800 font-semibold">Client-Focused Approach</h3>
                   <p className="text-slate-600">
                     We prioritize your needs and work tirelessly to achieve the best possible outcome for your case.
                   </p>
                 </div>
                 <div>
-                  <h3 className="text-xl mb-2 text-amber-600 font-semibold">Proven Track Record</h3>
+                  <h3 className="text-xl mb-2 text-amber-800 font-semibold">Proven Track Record</h3>
                   <p className="text-slate-600">
                     With hundreds of successful cases, we have established ourselves as leaders in the legal field.
                   </p>
                 </div>
                 <div>
-                  <h3 className="text-xl mb-2 text-amber-600 font-semibold">Personalized Service</h3>
+                  <h3 className="text-xl mb-2 text-amber-800 font-semibold">Personalized Service</h3>
                   <p className="text-slate-600">
                     Every case is unique, and we tailor our approach to meet your specific circumstances and goals.
                   </p>
@@ -202,7 +202,7 @@ export default function Home({ onNavigate }) {
           <a
             href="/contact"
             onClick={(e) => { e.preventDefault(); handleNavigate('/contact'); }}
-            className="inline-flex items-center bg-amber-600 hover:bg-amber-700 text-white px-8 py-4 rounded text-lg font-medium transition-colors"
+            className="inline-flex items-center bg-amber-700 hover:bg-amber-800 text-white px-8 py-4 rounded text-lg font-medium transition-colors"
           >
             Contact Us Today
             <ArrowRight className="ml-2 w-5 h-5" />

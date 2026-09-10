@@ -9,6 +9,7 @@ export default function Navbar({ currentPath, onNavigate }) {
     { path: '/about', label: 'About' },
     { path: '/practice-areas', label: 'Practice Areas' },
     { path: '/attorneys', label: 'Attorneys' },
+    { path: '/will-submission', label: 'Will Drafting' },
     { path: '/contact', label: 'Contact' },
   ];
 
@@ -42,20 +43,20 @@ export default function Navbar({ currentPath, onNavigate }) {
                 VBL LAW CHAMBERS
               </div>
               <div className="text-xs text-amber-500 font-semibold tracking-wide">
-                Advocates & Legal Consultants
+                Advocates &amp; Legal Consultants
               </div>
             </div>
           </a>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden md:flex items-center gap-7">
             {navItems.map((item) => (
               <a
                 key={item.path}
                 href={item.path}
                 onClick={(e) => { e.preventDefault(); handleNavClick(item.path); }}
-                className={`text-sm font-medium hover:text-amber-500 transition-colors ${
-                  isActive(item.path) ? 'text-amber-500 font-semibold' : 'text-slate-200'
+                className={`text-sm font-medium hover:text-amber-400 transition-colors ${
+                  isActive(item.path) ? 'text-amber-400 font-semibold' : 'text-slate-200'
                 }`}
               >
                 {item.label}
@@ -64,7 +65,7 @@ export default function Navbar({ currentPath, onNavigate }) {
             <a
               href="/contact"
               onClick={(e) => { e.preventDefault(); handleNavClick('/contact'); }}
-              className="bg-amber-600 hover:bg-amber-700 text-white px-6 py-2.5 rounded-md text-sm font-semibold transition-colors shadow-sm"
+              className="bg-amber-700 hover:bg-amber-800 text-white px-5 py-2.5 rounded-md text-sm font-semibold transition-colors shadow-sm"
             >
               Free Consultation
             </a>
@@ -73,7 +74,7 @@ export default function Navbar({ currentPath, onNavigate }) {
           {/* Mobile Menu Button */}
           <button
             type="button"
-            className="md:hidden p-2 text-white hover:text-amber-500 transition-colors"
+            className="md:hidden p-2 text-white hover:text-amber-400 transition-colors"
             onClick={() => setIsOpen(!isOpen)}
             aria-label="Toggle menu"
           >
@@ -89,8 +90,8 @@ export default function Navbar({ currentPath, onNavigate }) {
                 key={item.path}
                 href={item.path}
                 onClick={(e) => { e.preventDefault(); handleNavClick(item.path); }}
-                className={`block py-3 text-sm hover:text-amber-500 transition-colors ${
-                  isActive(item.path) ? 'text-amber-500 font-semibold' : 'text-slate-200'
+                className={`block py-3 text-sm hover:text-amber-400 transition-colors ${
+                  isActive(item.path) ? 'text-amber-400 font-semibold' : 'text-slate-200'
                 }`}
               >
                 {item.label}
@@ -99,7 +100,7 @@ export default function Navbar({ currentPath, onNavigate }) {
             <a
               href="/contact"
               onClick={(e) => { e.preventDefault(); handleNavClick('/contact'); }}
-              className="block mt-4 bg-amber-600 hover:bg-amber-700 text-white px-6 py-3 rounded-md text-sm text-center font-semibold transition-colors"
+              className="block mt-4 bg-amber-700 hover:bg-amber-800 text-white px-6 py-3 rounded-md text-sm text-center font-semibold transition-colors"
             >
               Free Consultation
             </a>

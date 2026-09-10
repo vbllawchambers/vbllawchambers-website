@@ -133,19 +133,19 @@ export default function PracticeAreas({ onNavigate }) {
                       <Icon className="w-7 h-7 text-amber-600" />
                     </div>
                     <div>
-                      <h3 className="text-2xl mb-2 font-semibold text-slate-900">{area.title}</h3>
+                      <h2 className="text-2xl mb-2 font-semibold text-slate-900">{area.title}</h2>
                       <p className="text-slate-600 leading-relaxed">{area.description}</p>
                     </div>
                   </div>
 
                   <div className="mt-6 pt-4 border-t border-slate-100">
-                    <h4 className="text-sm uppercase tracking-wide text-slate-500 font-semibold mb-3">
+                    <h3 className="text-sm uppercase tracking-wide text-slate-500 font-semibold mb-3">
                       Services Include:
-                    </h4>
+                    </h3>
                     <ul className="space-y-2">
                       {area.services.map((service, sIdx) => (
                         <li key={sIdx} className="flex items-start gap-2 text-sm text-slate-600">
-                          <span className="text-amber-600 font-bold mt-0.5">•</span>
+                          <span className="text-amber-700 font-bold mt-0.5">•</span>
                           <span>{service}</span>
                         </li>
                       ))}
@@ -168,7 +168,7 @@ export default function PracticeAreas({ onNavigate }) {
           <a
             href="/contact"
             onClick={(e) => { e.preventDefault(); handleNavigate('/contact'); }}
-            className="inline-block bg-amber-600 hover:bg-amber-700 text-white px-8 py-4 rounded text-lg font-medium transition-colors"
+            className="inline-block bg-amber-700 hover:bg-amber-800 text-white px-8 py-4 rounded text-lg font-medium transition-colors"
           >
             Schedule a Consultation
           </a>

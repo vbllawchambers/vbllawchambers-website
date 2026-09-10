@@ -11,6 +11,26 @@
       "destination": "/terms-of-service.html"
     },
     {
+      "source": "/practice-areas",
+      "destination": "/practice-areas.html"
+    },
+    {
+      "source": "/attorneys",
+      "destination": "/attorneys.html"
+    },
+    {
+      "source": "/contact",
+      "destination": "/contact.html"
+    },
+    {
+      "source": "/about",
+      "destination": "/about.html"
+    },
+    {
+      "source": "/will-submission",
+      "destination": "/will-submission.html"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

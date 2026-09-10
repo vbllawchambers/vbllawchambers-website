@@ -41,7 +41,7 @@ export default function TermsOfService({ onNavigate }) {
           {/* Section 1: Bar Council of India Notice */}
           <section className="bg-amber-50 border-l-4 border-amber-500 p-6 rounded-r-lg">
             <div className="flex items-center gap-3 mb-3">
-              <AlertCircle className="w-6 h-6 text-amber-600 flex-shrink-0" />
+              <AlertCircle className="w-6 h-6 text-amber-700 flex-shrink-0" />
               <h2 className="text-xl font-bold text-slate-900">Important Legal Notice & Bar Council of India Disclaimer</h2>
             </div>
             <p className="text-sm text-slate-700 leading-relaxed mb-3">
@@ -96,14 +96,14 @@ export default function TermsOfService({ onNavigate }) {
             </p>
             <ul className="space-y-3 list-none pl-0">
               <li className="flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <CheckCircle2 className="w-5 h-5 text-amber-700 flex-shrink-0 mt-0.5" />
                 <div>
                   <strong>YouTube API Services:</strong> By accessing YouTube content or using connected services, users agree to be bound by the{' '}
                   <a
                     href="https://www.youtube.com/t/terms"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-amber-600 hover:underline inline-flex items-center gap-1 font-medium"
+                    className="text-amber-700 hover:underline inline-flex items-center gap-1 font-medium"
                   >
                     YouTube Terms of Service <ExternalLink className="w-3.5 h-3.5" />
                   </a>
@@ -112,14 +112,14 @@ export default function TermsOfService({ onNavigate }) {
                     href="https://policies.google.com/terms"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-amber-600 hover:underline inline-flex items-center gap-1 font-medium"
+                    className="text-amber-700 hover:underline inline-flex items-center gap-1 font-medium"
                   >
                     Google Terms of Service <ExternalLink className="w-3.5 h-3.5" />
                   </a>.
                 </div>
               </li>
               <li className="flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <CheckCircle2 className="w-5 h-5 text-amber-700 flex-shrink-0 mt-0.5" />
                 <div>
                   <strong>External Links:</strong> This website may provide links to external websites (such as official court portals, government gazettes, and legal databases). We do not control or endorse the content or practices of these external sites.
                 </div>
@@ -167,7 +167,7 @@ export default function TermsOfService({ onNavigate }) {
               <p className="text-slate-600">H. No. 72, Brndavanam Colony, Kavali, SPSR Nellore District, Andhra Pradesh - 524201, India</p>
               <p className="text-slate-600">
                 Email:{' '}
-                <a href="mailto:vbllawchambers@gmail.com" className="text-amber-600 hover:underline font-medium">
+                <a href="mailto:vbllawchambers@gmail.com" className="text-amber-700 hover:underline font-medium">
                   vbllawchambers@gmail.com
                 </a>
               </p>

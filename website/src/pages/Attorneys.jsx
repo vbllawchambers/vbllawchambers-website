@@ -105,14 +105,14 @@ export default function Attorneys({ onNavigate }) {
                     className="w-full h-full object-cover"
                   />
                   {attorney.isLeader && (
-                    <div className="absolute top-4 left-4 bg-amber-600 text-white text-xs font-bold uppercase tracking-wider px-3 py-1 rounded shadow">
+                    <div className="absolute top-4 left-4 bg-amber-700 text-white text-xs font-bold uppercase tracking-wider px-3 py-1 rounded shadow">
                       Managing Advocate
                     </div>
                   )}
                 </div>
                 <div className="p-6">
-                  <h3 className="text-2xl mb-1 font-bold text-slate-900">{attorney.name}</h3>
-                  <p className="text-amber-600 font-semibold mb-1">{attorney.title}</p>
+                  <h2 className="text-2xl mb-1 font-bold text-slate-900">{attorney.name}</h2>
+                  <p className="text-amber-700 font-semibold mb-1">{attorney.title}</p>
                   {attorney.credentials && (
                     <p className="text-xs text-slate-500 font-medium mb-3">{attorney.credentials}</p>
                   )}
@@ -122,15 +122,15 @@ export default function Attorneys({ onNavigate }) {
                   <div className="flex items-center gap-4 pt-4 border-t border-slate-200">
                     <a
                       href={`mailto:${attorney.email}`}
-                      className="flex items-center gap-2 text-sm text-slate-600 hover:text-amber-600 transition-colors font-medium"
+                      className="flex items-center gap-2 text-sm text-slate-600 hover:text-amber-700 transition-colors font-medium"
                     >
-                      <Mail className="w-4 h-4 text-amber-600" />
+                      <Mail className="w-4 h-4 text-amber-700" />
                       <span>Email</span>
                     </a>
                     <a
                       href="/contact"
                       onClick={(e) => { e.preventDefault(); handleNavigate('/contact'); }}
-                      className="flex items-center gap-2 text-sm text-slate-600 hover:text-amber-600 transition-colors font-medium ml-auto"
+                      className="flex items-center gap-2 text-sm text-slate-600 hover:text-amber-700 transition-colors font-medium ml-auto"
                     >
                       <span>Consult</span>
                     </a>

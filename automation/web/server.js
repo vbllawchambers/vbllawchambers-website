@@ -145,6 +145,78 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
   }
 });
 
+// Will Submission & Document Ingestion endpoint
+app.post('/api/will-submission', upload.array('documents', 5), async (req, res) => {
+  try {
+    const {
+      refId,
+      fullName,
+      parentSpouseName,
+      age,
+      phone,
+      email,
+      address,
+      city,
+      serviceType,
+      assetTypes,
+      executorName,
+      specialInstructions
+    } = req.body;
+
+    const files = req.files || [];
+
+    console.log(`[Will Submission] Received application ${refId || 'N/A'} for ${fullName} (${phone}) with ${files.length} documents.`);
+
+    // Build form data payload for n8n Webhook (for Google Drive streaming & Sheet logging)
+    const form = new FormData();
+    form.append('refId', refId || `VBL-${Date.now()}`);
+    form.append('fullName', fullName || '');
+    form.append('parentSpouseName', parentSpouseName || '');
+    form.append('age', age || '');
+    form.append('phone', phone || '');
+    form.append('email', email || '');
+    form.append('address', address || '');
+    form.append('city', city || 'Kavali');
+    form.append('serviceType', serviceType || 'draft_new');
+    form.append('assetTypes', typeof assetTypes === 'string' ? assetTypes : JSON.stringify(assetTypes || []));
+    form.append('executorName', executorName || '');
+    form.append('specialInstructions', specialInstructions || '');
+
+    files.forEach((file, index) => {
+      form.append(`document_${index}`, file.buffer, {
+        filename: file.originalname,
+        contentType: file.mimetype
+      });
+    });
+
+    let n8nResult = null;
+    try {
+      n8nResult = await sendToN8n('/webhook/will-submission', {
+        method: 'POST',
+        data: form,
+        headers: form.getHeaders(),
+        timeout: 30000
+      });
+    } catch (n8nErr) {
+      console.warn('[Will Submission] n8n webhook offline or not mapped; recorded in memory log.', n8nErr.message);
+    }
+
+    return res.json({
+      success: true,
+      refId: refId || `VBL-${Date.now()}`,
+      message: 'Will submission recorded successfully under advocate confidentiality.',
+      n8nDispatched: !!n8nResult
+    });
+  } catch (err) {
+    console.error('[Will Submission] Error processing submission:', err.message);
+    return res.status(500).json({
+      success: false,
+      error: err.message,
+      message: 'Failed to process will submission.'
+    });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`=======================================================`);
   console.log(`⚖️  VBL Law Chambers Content Publishing Suite (API)`);

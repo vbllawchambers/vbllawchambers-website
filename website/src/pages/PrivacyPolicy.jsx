@@ -52,9 +52,9 @@ export default function PrivacyPolicy({ onNavigate }) {
             <ul className="space-y-2 list-disc pl-5 text-slate-700">
               <li><strong>Organization / Entity Name:</strong> VBL Law Chambers (Founded in 1999)</li>
               <li><strong>Developer / Technical Contact:</strong> CS Hari Krishna / VBL Law Chambers Engineering</li>
-              <li><strong>Official Application Homepage:</strong> <a href="https://vbllawchambers.com" className="text-amber-600 hover:underline font-medium">https://vbllawchambers.com</a></li>
+              <li><strong>Official Application Homepage:</strong> <a href="https://vbllawchambers.com" className="text-amber-700 hover:underline font-medium">https://vbllawchambers.com</a></li>
               <li><strong>Office Address:</strong> H. No. 72, Brndavanam Colony, Kavali, SPSR Nellore District, Andhra Pradesh - 524201, India</li>
-              <li><strong>Official Contact Email:</strong> <a href="mailto:vbllawchambers@gmail.com" className="text-amber-600 hover:underline font-medium">vbllawchambers@gmail.com</a></li>
+              <li><strong>Official Contact Email:</strong> <a href="mailto:vbllawchambers@gmail.com" className="text-amber-700 hover:underline font-medium">vbllawchambers@gmail.com</a></li>
             </ul>
           </section>
 
@@ -71,19 +71,19 @@ export default function PrivacyPolicy({ onNavigate }) {
             </p>
             <ul className="space-y-3 list-none pl-0">
               <li className="flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <CheckCircle2 className="w-5 h-5 text-amber-700 flex-shrink-0 mt-0.5" />
                 <div>
                   <strong>Direct Consultation Data:</strong> Name, cell phone number, email address, practice area, and case descriptions submitted voluntarily via our client inquiry form.
                 </div>
               </li>
               <li className="flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <CheckCircle2 className="w-5 h-5 text-amber-700 flex-shrink-0 mt-0.5" />
                 <div>
                   <strong>Technical Website Data:</strong> IP address, browser type, referring pages, device characteristics, and timestamps to maintain site security, prevent abuse, and optimize server performance.
                 </div>
               </li>
               <li className="flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <CheckCircle2 className="w-5 h-5 text-amber-700 flex-shrink-0 mt-0.5" />
                 <div>
                   <strong>Google User Data Accessed by the Application:</strong> When authenticating via Google OAuth 2.0, our application accesses your Google user identifier, email address associated with your Google account, YouTube channel name/ID, and video upload metadata.
                 </div>
@@ -101,7 +101,7 @@ export default function PrivacyPolicy({ onNavigate }) {
             </div>
             
             <p className="text-slate-700">
-              Our application integrates with <strong>Google API Services</strong> (specifically the <strong>YouTube Data API v3</strong>, scopes <code>https://www.googleapis.com/auth/youtube.upload</code> and <code>https://www.googleapis.com/auth/youtube</code>) to facilitate authorized publishing, scheduling, and management of legal awareness videos on our official channel (<a href="https://www.youtube.com/@vbllawchambers" target="_blank" rel="noopener noreferrer" className="text-amber-600 hover:underline">@vbllawchambers</a>).
+              Our application integrates with <strong>Google API Services</strong> (specifically the <strong>YouTube Data API v3</strong>, scopes <code>https://www.googleapis.com/auth/youtube.upload</code> and <code>https://www.googleapis.com/auth/youtube</code>) to facilitate authorized publishing, scheduling, and management of legal awareness videos on our official channel (<a href="https://www.youtube.com/@vbllawchambers" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">@vbllawchambers</a>).
             </p>
 
             <div className="p-4 bg-amber-50 border-l-4 border-amber-500 rounded-r text-amber-900 font-medium text-sm leading-relaxed">
@@ -174,8 +174,8 @@ export default function PrivacyPolicy({ onNavigate }) {
             </p>
             <ul className="space-y-2 list-disc pl-5 text-slate-700">
               <li><strong>Automatic Deletion:</strong> When the data retention period expires for a given type of data, we will securely delete or destroy it.</li>
-              <li><strong>User-Initiated Deletion:</strong> You may request for your data to be deleted at any time by emailing us at <a href="mailto:vbllawchambers@gmail.com" className="text-amber-600 hover:underline">vbllawchambers@gmail.com</a>. Upon receipt of your request, all associated OAuth credentials, tokens, and personal records will be permanently purged from our servers within 48 hours.</li>
-              <li><strong>Immediate Revocation via Google:</strong> You can revoke the application's access to your Google account at any moment through <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer" className="text-amber-600 hover:underline">Google Security Settings (Third-party apps with account access)</a>. Revoking access invalidates all active OAuth tokens immediately.</li>
+              <li><strong>User-Initiated Deletion:</strong> You may request for your data to be deleted at any time by emailing us at <a href="mailto:vbllawchambers@gmail.com" className="text-amber-700 hover:underline">vbllawchambers@gmail.com</a>. Upon receipt of your request, all associated OAuth credentials, tokens, and personal records will be permanently purged from our servers within 48 hours.</li>
+              <li><strong>Immediate Revocation via Google:</strong> You can revoke the application's access to your Google account at any moment through <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Google Security Settings (Third-party apps with account access)</a>. Revoking access invalidates all active OAuth tokens immediately.</li>
             </ul>
           </section>
 
@@ -199,8 +199,8 @@ export default function PrivacyPolicy({ onNavigate }) {
               For further details regarding the privacy and data practices of third-party platforms utilized by our workflows, please review their respective policies:
             </p>
             <ul className="space-y-1 list-disc pl-5 text-slate-700">
-              <li><a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-amber-600 hover:underline">Google Privacy Policy</a></li>
-              <li><a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener noreferrer" className="text-amber-600 hover:underline">YouTube Terms of Service</a></li>
+              <li><a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Google Privacy Policy</a></li>
+              <li><a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">YouTube Terms of Service</a></li>
             </ul>
           </section>
 
@@ -212,10 +212,10 @@ export default function PrivacyPolicy({ onNavigate }) {
               <p className="text-slate-600">Attn: Privacy &amp; Data Protection Officer (CS Hari Krishna)</p>
               <p className="text-slate-600">H. No. 72, Brndavanam Colony, Kavali, SPSR Nellore District, Andhra Pradesh - 524201, India</p>
               <p className="text-slate-600">
-                Email: <a href="mailto:vbllawchambers@gmail.com" className="text-amber-600 hover:underline font-medium">vbllawchambers@gmail.com</a>
+                Email: <a href="mailto:vbllawchambers@gmail.com" className="text-amber-700 hover:underline font-medium">vbllawchambers@gmail.com</a>
               </p>
               <p className="text-slate-600">
-                Official Website: <a href="https://vbllawchambers.com" className="text-amber-600 hover:underline font-medium">https://vbllawchambers.com</a>
+                Official Website: <a href="https://vbllawchambers.com" className="text-amber-700 hover:underline font-medium">https://vbllawchambers.com</a>
               </p>
             </div>
           </section>

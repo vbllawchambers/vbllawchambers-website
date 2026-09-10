@@ -36,7 +36,7 @@ export default function Footer({ onNavigate }) {
             
             {/* Social Media Links */}
             <div>
-              <h4 className="text-xs uppercase tracking-wider text-amber-500 font-semibold mb-3">Connect With Us</h4>
+              <h3 className="text-xs uppercase tracking-wider text-amber-400 font-semibold mb-3">Connect With Us</h3>
               <div className="flex flex-wrap gap-3">
                 <a
                   href="https://www.facebook.com/profile.php?id=61593945870418"
@@ -127,9 +127,18 @@ export default function Footer({ onNavigate }) {
               </li>
               <li>
                 <a
+                  href="/will-submission"
+                  onClick={(e) => handleNavClick(e, '/will-submission')}
+                  className="text-slate-400 hover:text-amber-400 transition-colors"
+                >
+                  Will Drafting &amp; Submission
+                </a>
+              </li>
+              <li>
+                <a
                   href="/contact"
                   onClick={(e) => handleNavClick(e, '/contact')}
-                  className="text-slate-400 hover:text-amber-500 transition-colors"
+                  className="text-slate-400 hover:text-amber-400 transition-colors"
                 >
                   Contact
                 </a>

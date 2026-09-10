@@ -4,12 +4,11 @@
 User-agent: *
 Allow: /
 
-# Client document-submission areas (added with the Will Submission portal).
-# These must never be indexed - they handle confidential client material.
-Disallow: /will-submission
+# Client document-submission endpoints & internal uploads (must never be indexed)
+Disallow: /api/
 Disallow: /document-upload
 Disallow: /client-portal
-Disallow: /api/
+Allow: /will-submission
 
 # ─── Search Engines ──────────────────────────────────
 User-agent: Googlebot

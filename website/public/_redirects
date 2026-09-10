@@ -1,3 +1,8 @@
-/privacy-policy /privacy-policy.html 200
-/terms-of-service /terms-of-service.html 200
-/* /index.html 200
+/privacy-policy     /privacy-policy.html     200
+/terms-of-service   /terms-of-service.html   200
+/practice-areas     /practice-areas.html     200
+/attorneys          /attorneys.html          200
+/contact            /contact.html            200
+/about              /about.html              200
+/will-submission    /will-submission.html    200
+/*                  /index.html              200
