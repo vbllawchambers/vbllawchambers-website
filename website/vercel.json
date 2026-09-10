@@ -31,6 +31,10 @@
       "destination": "/will-submission.html"
     },
     {
+      "source": "/will-drafting",
+      "destination": "/will-submission.html"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

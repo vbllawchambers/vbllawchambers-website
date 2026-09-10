@@ -58,9 +58,35 @@ const ROUTE_METADATA = {
 
 export default function App() {
   const getInitialPath = () => {
-    const pathname = window.location.pathname;
-    if (['/about', '/practice-areas', '/attorneys', '/contact', '/will-submission', '/admin', '/chambers-portal', '/privacy-policy', '/terms-of-service'].includes(pathname)) {
-      return pathname;
+    try {
+      const rawPath = decodeURIComponent(window.location.pathname).trim().replace(/\/+$/, '') || '/';
+      const normalized = rawPath.toLowerCase();
+
+      // Aliases for Will Submission (handles spaces, underscores, alternate names)
+      if (
+        normalized === '/will-submission' ||
+        normalized === '/will submission' ||
+        normalized === '/will_submission' ||
+        normalized === '/will-drafting' ||
+        normalized === '/submit-will'
+      ) {
+        return '/will-submission';
+      }
+
+      // Aliases for Chambers Admin Portal
+      if (
+        normalized === '/admin' ||
+        normalized === '/chambers-portal' ||
+        normalized === '/portal'
+      ) {
+        return '/chambers-portal';
+      }
+
+      if (['/about', '/practice-areas', '/attorneys', '/contact', '/privacy-policy', '/terms-of-service'].includes(normalized)) {
+        return normalized;
+      }
+    } catch {
+      // Fallback on any URI malformed error
     }
     return '/';
   };
