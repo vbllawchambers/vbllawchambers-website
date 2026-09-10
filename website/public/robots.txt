@@ -1,0 +1,34 @@
+# ─── VBL Law Chambers — robots.txt ───────────────────
+# https://vbllawchambers.com
+
+User-agent: *
+Allow: /
+
+# Client document-submission areas (added with the Will Submission portal).
+# These must never be indexed - they handle confidential client material.
+Disallow: /will-submission
+Disallow: /document-upload
+Disallow: /client-portal
+Disallow: /api/
+
+# ─── Search Engines ──────────────────────────────────
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+# ─── Social Crawlers (link previews) ────────────────
+User-agent: Twitterbot
+Allow: /
+
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /
+
+User-agent: WhatsApp
+Allow: /
+
+Sitemap: https://vbllawchambers.com/sitemap.xml

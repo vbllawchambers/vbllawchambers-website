@@ -1,0 +1,161 @@
+# =============================================================================
+# VBL Law Chambers — Render Blueprint (Free Tier, $0/month)
+#
+# Deploy:  Render Dashboard -> New -> Blueprint -> point at this repo
+#          (Render reads this file; set the secret env vars in the dashboard.)
+#
+# ── FREE TIER CONSTRAINTS THIS FILE IS BUILT AROUND ────────────────────────
+#   * 512 MB RAM per service          -> no Postiz (measured at 2.34 GB)
+#   * NO persistent disks             -> n8n must use external Postgres,
+#                                        NOT its default SQLite
+#   * Services sleep after ~15 min    -> ~50 s cold start on first request
+#     idle, wake on HTTP request         (fine: a post landing a minute late
+#                                        does not matter)
+#   * Render Cron Jobs are PAID       -> schedule externally instead, see
+#                                        .github/workflows/publish-cron.yml
+#   * Render's own free Postgres
+#     EXPIRES after ~30 days          -> use Neon (neon.tech) free tier,
+#                                        which does not expire
+#
+# ── WHY NO POSTIZ ─────────────────────────────────────────────────────────
+#   Postiz routes every publish through Temporal (verified in its source:
+#   posts.service.ts calls startWorkflow), and Temporal requires Elasticsearch
+#   plus its own Postgres. Elasticsearch needs a disk, and disks on Render are
+#   paid + always-on. Publishing therefore happens directly from n8n instead.
+#
+# ── COLD-START NOTE FOR UPLOADS ───────────────────────────────────────────
+#   The portal buffers uploads in memory (multer.memoryStorage, 250 MB cap).
+#   On a 512 MB instance a large video WILL OOM. Before relying on this in
+#   production, move uploads to browser -> Google Drive directly and send only
+#   the file ID through the portal. Meta/Pinterest fetch media from a URL, so
+#   only YouTube needs real bytes to pass through.
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # Advocate Content Portal — React dashboard + Express API on one port
+  # ---------------------------------------------------------------------------
+  - type: web
+    name: advocate-content-portal
+    runtime: docker
+    plan: free
+    region: singapore              # closest Render region to Andhra Pradesh
+    rootDir: automation/web
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    autoDeploy: true
+    branch: main
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Render injects PORT and expects the service to bind it. server.js reads
+      # WEB_PORT, so these must agree - see the PORT note in the README.
+      - key: WEB_PORT
+        value: 3300
+      - key: TZ
+        value: Asia/Kolkata
+      # Public URL of the n8n service below. Render exposes each service's URL;
+      # fill this in after the first deploy (or use fromService, see docs).
+      - key: N8N_INTERNAL_URL
+        fromService:
+          type: web
+          name: n8n-automation
+          property: hostport
+      - key: N8N_EXTERNAL_URL
+        fromService:
+          type: web
+          name: n8n-automation
+          property: hostport
+      - key: POSTIZ_API_KEY
+        sync: false              # set in dashboard; unused once Postiz is gone
+
+  # ---------------------------------------------------------------------------
+  # n8n — workflow engine. Postgres-backed because free tier has no disk.
+  # ---------------------------------------------------------------------------
+  - type: web
+    name: n8n-automation
+    runtime: image
+    plan: free
+    region: singapore
+    autoDeploy: false
+    image:
+      url: docker.n8n.io/n8nio/n8n:latest
+    envVars:
+      # --- Persistence: external Postgres (Neon free tier) -------------------
+      # Without this n8n falls back to SQLite on an ephemeral disk and you lose
+      # every credential and workflow on each restart.
+      - key: DB_TYPE
+        value: postgresdb
+      - key: DB_POSTGRESDB_HOST
+        sync: false             # e.g. ep-xxx.ap-southeast-1.aws.neon.tech
+      - key: DB_POSTGRESDB_PORT
+        value: 5432
+      - key: DB_POSTGRESDB_DATABASE
+        sync: false
+      - key: DB_POSTGRESDB_USER
+        sync: false
+      - key: DB_POSTGRESDB_PASSWORD
+        sync: false
+      - key: DB_POSTGRESDB_SSL_REJECT_UNAUTHORIZED
+        value: "false"          # Neon terminates TLS with its own chain
+
+      # --- Encryption key ----------------------------------------------------
+      # MUST match the key that encrypted the existing credentials, otherwise
+      # every stored credential becomes unreadable. Copy it from automation/.env
+      # (N8N_ENCRYPTION_KEY) - do not let Render generate a new one.
+      - key: N8N_ENCRYPTION_KEY
+        sync: false
+
+      # --- Public URL / OAuth callbacks -------------------------------------
+      # N8N_EDITOR_BASE_URL is what n8n uses to build OAuth callback URLs, so it
+      # must match the redirect URI registered in the Google/Meta consoles:
+      #   {N8N_EDITOR_BASE_URL}/rest/oauth2-credential/callback
+      - key: N8N_EDITOR_BASE_URL
+        fromService:
+          type: web
+          name: n8n-automation
+          property: hostport
+      - key: WEBHOOK_URL
+        fromService:
+          type: web
+          name: n8n-automation
+          property: hostport
+      - key: N8N_HOST
+        fromService:
+          type: web
+          name: n8n-automation
+          property: host
+      - key: N8N_PROTOCOL
+        value: https
+      - key: N8N_PORT
+        value: 5678
+
+      # --- Runtime -----------------------------------------------------------
+      - key: GENERIC_TIMEZONE
+        value: Asia/Kolkata
+      - key: TZ
+        value: Asia/Kolkata
+      # Buffer binary data to the (ephemeral) container filesystem rather than
+      # RAM. Essential on a 512 MB instance when YouTube uploads pass through.
+      - key: N8N_DEFAULT_BINARY_DATA_MODE
+        value: filesystem
+      # Trim memory: skip the bundled task runner unless Code nodes need it.
+      - key: N8N_RUNNERS_ENABLED
+        value: "false"
+      - key: N8N_DIAGNOSTICS_ENABLED
+        value: "false"
+      - key: N8N_HIRING_BANNER_ENABLED
+        value: "false"
+      # Executions accumulate in Postgres and Neon's free tier is 0.5 GB.
+      - key: EXECUTIONS_DATA_PRUNE
+        value: "true"
+      - key: EXECUTIONS_DATA_MAX_AGE
+        value: "168"            # hours (7 days)
+
+      # --- Publishing credentials -------------------------------------------
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: TELEGRAM_TOKEN
+        sync: false
+      - key: TELEGRAM_CHAT_ID
+        sync: false

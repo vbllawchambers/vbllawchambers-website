@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img"
+  aria-label="VBL Law Chambers — Advocates and Legal Consultants, Kavali, Andhra Pradesh">
+
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0F2942" />
+      <stop offset="55%" stop-color="#12314F" />
+      <stop offset="100%" stop-color="#0A1E32" />
+    </linearGradient>
+    <!-- userSpaceOnUse: an objectBoundingBox gradient does not render on
+         straight lines, whose bounding box has zero area in one dimension. -->
+    <linearGradient id="gold" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="1200" y2="0">
+      <stop offset="0%" stop-color="#B48A22" />
+      <stop offset="50%" stop-color="#D4AF37" />
+      <stop offset="100%" stop-color="#B48A22" />
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)" />
+
+  <!-- Corner rules -->
+  <path d="M64 64 H236" stroke="url(#gold)" stroke-width="3" stroke-linecap="round" />
+  <path d="M64 64 V196" stroke="url(#gold)" stroke-width="3" stroke-linecap="round" />
+  <path d="M1136 566 H964" stroke="url(#gold)" stroke-width="3" stroke-linecap="round" />
+  <path d="M1136 566 V434" stroke="url(#gold)" stroke-width="3" stroke-linecap="round" />
+
+  <!-- Scales of justice emblem -->
+  <g transform="translate(600 168)" stroke="url(#gold)" fill="none"
+     stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M0 -46 V70" />
+    <path d="M-96 -30 H96" />
+    <path d="M0 -46 m-9 0 a9 9 0 1 0 18 0 a9 9 0 1 0 -18 0" fill="url(#gold)" stroke="none" />
+    <path d="M-40 70 H40" />
+    <path d="M-96 -30 L-126 34 H-66 Z" />
+    <path d="M96 -30 L66 34 H126 Z" />
+  </g>
+
+  <text x="600" y="330" text-anchor="middle" fill="#FFFFFF"
+    font-family="Georgia, 'Times New Roman', serif" font-size="72" font-weight="700"
+    letter-spacing="10">VBL LAW CHAMBERS</text>
+
+  <text x="600" y="382" text-anchor="middle" fill="url(#gold)"
+    font-family="Georgia, 'Times New Roman', serif" font-size="27" letter-spacing="6">
+    ADVOCATES &amp; LEGAL CONSULTANTS</text>
+
+  <path d="M470 414 H730" stroke="url(#gold)" stroke-width="2" opacity="0.65" />
+
+  <text x="600" y="466" text-anchor="middle" fill="#E2E8F0"
+    font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="30" font-weight="600">
+    Will Drafting &amp; Estate Planning</text>
+
+  <text x="600" y="512" text-anchor="middle" fill="#94A3B8"
+    font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="24">
+    Kavali &#183; Nellore &#183; Kandukur &#183; Singarayakonda</text>
+
+  <text x="600" y="556" text-anchor="middle" fill="#B48A22"
+    font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="21" letter-spacing="2">
+    25+ YEARS OF LEGAL PRACTICE</text>
+</svg>

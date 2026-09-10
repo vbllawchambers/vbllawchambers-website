@@ -13,7 +13,9 @@ const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const app = express();
-const PORT = process.env.WEB_PORT || 3300;
+// PORT is injected by hosts like Render and must win; WEB_PORT is the local
+// docker-compose setting.
+const PORT = process.env.PORT || process.env.WEB_PORT || 3300;
 
 // n8n Webhook URLs
 const N8N_INTERNAL_URL = process.env.N8N_INTERNAL_URL || 'http://n8n-automation:5678';
