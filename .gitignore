@@ -43,3 +43,7 @@ yarn-error.log*
 Thumbs.db
 [Dd]esktop.ini
 .DS_Store
+
+# Confidential Client Docs & Agreements
+docs/
+*.docx
