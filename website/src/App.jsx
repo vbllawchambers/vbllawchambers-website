@@ -8,6 +8,7 @@ import Attorneys from './pages/Attorneys';
 import Contact from './pages/Contact';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
+import { Analytics } from '@vercel/analytics/react';
 
 export default function App() {
   const getInitialPath = () => {
@@ -63,6 +64,7 @@ export default function App() {
         {renderPage()}
       </main>
       <Footer onNavigate={navigateTo} />
+      <Analytics />
     </div>
   );
 }
