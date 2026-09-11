@@ -27,15 +27,19 @@ if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 
 const SUBMISSIONS_FILE = path.join(DATA_DIR, 'submissions.json');
 
+// Seed/demo records only. This file is tracked in version control, so it must
+// NEVER contain real client details - names, phone numbers, addresses or
+// privileged instructions. Live records live in data/submissions.json, which is
+// gitignored.
 const INITIAL_SUBMISSIONS = [
   {
     refId: 'VBL-475868',
     date: '2026-09-11 10:05 AM',
-    fullName: 'Client Submission (VBL-475868)',
+    fullName: 'Sample Submission (VBL-475868)',
     parentSpouseName: 'Testator / Family Representative',
     age: '55',
-    phone: '+91 94402 81736',
-    email: 'client.inquiry@vbllawchambers.com',
+    phone: '+91 90000 00000',
+    email: 'sample.enquiry@example.com',
     city: 'Kavali',
     address: 'Kavali, SPSR Nellore Dist. - 524201',
     serviceType: 'draft_new',
@@ -51,18 +55,18 @@ const INITIAL_SUBMISSIONS = [
   {
     refId: 'VBL-829104',
     date: '2026-09-10 11:30 AM',
-    fullName: 'P. Venkata Ramana Rao',
-    parentSpouseName: 'S/o Late Subba Rao',
+    fullName: 'Sample Testator One',
+    parentSpouseName: 'S/o Sample Parent',
     age: '64',
-    phone: '+91 94402 81736',
-    email: 'pvramana.kavali@gmail.com',
+    phone: '+91 90000 00001',
+    email: 'sample.one@example.com',
     city: 'Kavali',
-    address: 'Plot 42, RTC Colony, Kavali - 524201',
+    address: 'Sample Address, Kavali - 524201',
     serviceType: 'draft_new',
     serviceLabel: 'Fresh Will Drafting',
     assetTypes: ['Agricultural / Farm Lands', 'Residential / Commercial Real Estate'],
-    executorName: 'P. Krishna Chaitanya (Son)',
-    specialInstructions: 'Need equal partition of 4.5 acres agricultural land at Musunuru between two sons, with lifetime usufruct rights to wife.',
+    executorName: 'Sample Executor (Son)',
+    specialInstructions: 'Sample instruction: equal partition of agricultural land between two sons, with lifetime usufruct rights to spouse.',
     documents: [
       { name: 'Pattadar_Passbook_Musunuru.pdf', size: '2.4 MB', driveUrl: 'https://drive.google.com/drive/folders/1Q171pLkFgucgHO0bJ1lRWlxC3en-tHZz' },
       { name: 'Aadhaar_Card_Testator.pdf', size: '820 KB', driveUrl: 'https://drive.google.com/drive/folders/1Q171pLkFgucgHO0bJ1lRWlxC3en-tHZz' },
@@ -72,18 +76,18 @@ const INITIAL_SUBMISSIONS = [
   {
     refId: 'VBL-741295',
     date: '2026-09-09 04:15 PM',
-    fullName: 'K. Lakshmi Narasamma',
-    parentSpouseName: 'W/o K. Venkateswarlu',
+    fullName: 'Sample Testator Two',
+    parentSpouseName: 'W/o Sample Spouse',
     age: '58',
-    phone: '+91 98480 39281',
-    email: 'lakshmi.narasamma58@yahoo.com',
+    phone: '+91 90000 00002',
+    email: 'sample.two@example.com',
     city: 'Singarayakonda',
-    address: 'Near Old Bus Stand, Singarayakonda, Prakasam Dist.',
+    address: 'Sample Address, Singarayakonda, Prakasam Dist.',
     serviceType: 'review_existing',
     serviceLabel: 'Scrutiny of Existing Draft',
     assetTypes: ['Residential / Commercial Real Estate', 'Gold, Jewelry & Heirlooms'],
-    executorName: 'K. Sridhar (Eldest Son)',
-    specialInstructions: 'Existing draft written in 2018 in Telugu. Want to verify whether registered gift deed of commercial shop affects this draft.',
+    executorName: 'Sample Executor (Eldest Son)',
+    specialInstructions: 'Sample instruction: verify whether a registered gift deed affects an existing Telugu-language draft.',
     documents: [
       { name: 'Existing_Telugu_Will_Draft.pdf', size: '3.1 MB', driveUrl: 'https://drive.google.com/drive/folders/1Q171pLkFgucgHO0bJ1lRWlxC3en-tHZz' },
       { name: 'Commercial_Shop_SaleDeed.pdf', size: '4.8 MB', driveUrl: 'https://drive.google.com/drive/folders/1Q171pLkFgucgHO0bJ1lRWlxC3en-tHZz' },
@@ -232,6 +236,26 @@ app.post('/api/auth/login', (req, res) => {
 app.get('/api/auth/verify', requireAdminAuth, (req, res) => {
   res.json({ success: true, authenticated: true });
 });
+
+// Canonical service types offered by the chambers. These ids must stay in sync
+// with the wizard in website/src/pages/WillSubmission.jsx.
+const SERVICE_LABELS = {
+  draft_new: 'Fresh Will Drafting',
+  review_existing: 'Scrutiny of Existing Draft',
+  codicil: 'Codicil (Amendment)',
+  family_settlement: 'Family Settlement Deed'
+};
+
+// An unrecognised serviceType must NEVER be silently recorded as some specific
+// service - that puts the wrong legal instruction on a client's file. The
+// submission is still accepted (never discard a client's documents); it is
+// flagged for the advocate to classify manually.
+function resolveServiceLabel(serviceType) {
+  const key = (serviceType || 'draft_new').trim();
+  if (SERVICE_LABELS[key]) return SERVICE_LABELS[key];
+  console.warn(`[Will Submission] Unrecognised serviceType "${serviceType}" - flagged for manual classification.`);
+  return 'Unspecified — requires chambers review';
+}
 
 // Configure Multer for in-memory upload buffering (up to 250MB for video)
 const upload = multer({
@@ -493,9 +517,7 @@ app.post('/api/will-submission', upload.array('documents', 10), async (req, res)
       city: (city || 'Kavali').trim(),
       address: (address || '').trim(),
       serviceType: serviceType || 'draft_new',
-      serviceLabel: serviceType === 'draft_new' ? 'Fresh Will Drafting' :
-                    serviceType === 'review_existing' ? 'Scrutiny of Existing Draft' :
-                    serviceType === 'codicil' ? 'Codicil (Amendment)' : 'Family Settlement Deed',
+      serviceLabel: resolveServiceLabel(serviceType),
       assetTypes: parsedAssets,
       executorName: (executorName || '').trim(),
       specialInstructions: (specialInstructions || '').trim(),
@@ -585,7 +607,9 @@ app.post('/api/will-submission', upload.array('documents', 10), async (req, res)
 });
 
 // Retrieve all will submissions (Chambers Staff / Admin)
-app.get('/api/will-submissions', (req, res) => {
+// PROTECTED: returns every client's PII (name, phone, address), privileged
+// drafting instructions and document vault links. Must never be public.
+app.get('/api/will-submissions', requireAdminAuth, (req, res) => {
   try {
     const list = loadSubmissions();
     return res.json({ success: true, count: list.length, submissions: list });
@@ -596,6 +620,10 @@ app.get('/api/will-submissions', (req, res) => {
 });
 
 // Retrieve single will submission by reference ID
+// Intentionally PUBLIC: clients track their own application by reference ID
+// without an account, so this cannot require the admin key. Access is limited
+// to whoever holds the specific VBL-XXXXXX reference. Do not add auth here
+// without also reworking the client-facing tracker in WillSubmission.jsx.
 app.get('/api/will-submissions/:refId', (req, res) => {
   try {
     const { refId } = req.params;
@@ -611,7 +639,8 @@ app.get('/api/will-submissions/:refId', (req, res) => {
 });
 
 // Update will submission status (Chambers Admin)
-app.patch('/api/will-submissions/:refId/status', (req, res) => {
+// PROTECTED: mutates a client's statutory scrutiny stage.
+app.patch('/api/will-submissions/:refId/status', requireAdminAuth, (req, res) => {
   try {
     const { refId } = req.params;
     const { status } = req.body;

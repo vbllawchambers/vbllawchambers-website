@@ -24,7 +24,19 @@ import {
 
 import { INITIAL_SAMPLE_SUBMISSIONS, getStoredSubmissions } from '../data/sampleSubmissions';
 
-const CHAMBERS_PASSCODE = (import.meta.env.VITE_CHAMBERS_PASSCODE || 'vbl2026').toLowerCase().trim();
+// NOTE: the passcode is validated server-side by POST /api/auth/login. Any
+// value compiled into this bundle is public (Vite inlines import.meta.env at
+// build time), so it is only used as an offline courtesy gate for sample data
+// when the chambers API is unreachable - never as the real security boundary.
+const OFFLINE_FALLBACK_PASSCODE = (import.meta.env.VITE_CHAMBERS_PASSCODE || 'vbl2026')
+  .toLowerCase()
+  .trim();
+
+// Confidential endpoints require the chambers admin token issued by the API.
+function adminAuthHeaders() {
+  const token = sessionStorage.getItem('vbl_admin_token');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
 
 export default function AdminPortal({ onNavigate }) {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -32,21 +44,25 @@ export default function AdminPortal({ onNavigate }) {
   });
   const [passcode, setPasscode] = useState('');
   const [authError, setAuthError] = useState(false);
+  const [authMessage, setAuthMessage] = useState('');
 
   const [submissions, setSubmissions] = useState([]);
   const [filterStatus, setFilterStatus] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSubmission, setSelectedSubmission] = useState(null);
 
-  // Load submissions from local storage + API + sample data
+  // Load submissions from local storage + API + sample data.
+  // Re-runs on authentication because the API call needs the token issued at login.
   useEffect(() => {
     const loaded = getStoredSubmissions();
     setSubmissions(loaded);
-    setSelectedSubmission(loaded[0] || null);
+    setSelectedSubmission((prev) => prev || loaded[0] || null);
 
-    // Also attempt fetching from API if backend is active
-    fetch('/api/will-submissions')
-      .then((res) => res.json())
+    if (!isAuthenticated) return;
+
+    // Fetch live records if the chambers API is active and we hold a token
+    fetch('/api/will-submissions', { headers: adminAuthHeaders() })
+      .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data && Array.isArray(data.submissions)) {
           setSubmissions(data.submissions);
@@ -55,23 +71,61 @@ export default function AdminPortal({ onNavigate }) {
       .catch(() => {
         // Backend offline; sample & local data active
       });
-  }, []);
+  }, [isAuthenticated]);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    if (passcode.trim().toLowerCase() === CHAMBERS_PASSCODE) {
-      sessionStorage.setItem('vbl_admin_auth', 'true');
-      setIsAuthenticated(true);
-      setAuthError(false);
-    } else {
+    const entered = passcode.trim();
+    if (!entered) {
       setAuthError(true);
+      setAuthMessage('Enter the chambers passcode.');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ passcode: entered })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.success && data.token) {
+          sessionStorage.setItem('vbl_admin_token', data.token);
+          sessionStorage.setItem('vbl_admin_auth', 'true');
+          setIsAuthenticated(true);
+          setAuthError(false);
+          setAuthMessage('');
+          return;
+        }
+      }
+
+      // API reachable but rejected the passcode.
+      setAuthError(true);
+      setAuthMessage('Invalid chambers passcode.');
+    } catch {
+      // API unreachable. Allow read-only access to locally cached/sample records
+      // only - no confidential server data is retrievable in this state.
+      if (entered.toLowerCase() === OFFLINE_FALLBACK_PASSCODE) {
+        sessionStorage.setItem('vbl_admin_auth', 'true');
+        sessionStorage.removeItem('vbl_admin_token');
+        setIsAuthenticated(true);
+        setAuthError(false);
+        setAuthMessage('Chambers API offline — showing locally cached records only.');
+      } else {
+        setAuthError(true);
+        setAuthMessage('Invalid chambers passcode.');
+      }
     }
   };
 
   const handleLogout = () => {
     sessionStorage.removeItem('vbl_admin_auth');
+    sessionStorage.removeItem('vbl_admin_token');
     setIsAuthenticated(false);
     setPasscode('');
+    setAuthMessage('');
   };
 
   const handleStatusChange = (refId, newStatus) => {
@@ -87,7 +141,7 @@ export default function AdminPortal({ onNavigate }) {
     }
     fetch(`/api/will-submissions/${refId}/status`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...adminAuthHeaders() },
       body: JSON.stringify({ status: newStatus })
     }).catch(() => {});
   };
@@ -146,7 +200,7 @@ export default function AdminPortal({ onNavigate }) {
             {authError && (
               <div className="flex items-center gap-2 text-red-600 text-xs font-semibold bg-red-50 p-2.5 rounded-lg">
                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                <span>Incorrect chambers passcode. Please try again.</span>
+                <span>{authMessage || 'Incorrect chambers passcode. Please try again.'}</span>
               </div>
             )}
 

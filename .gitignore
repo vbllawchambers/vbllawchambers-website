@@ -48,6 +48,12 @@ Thumbs.db
 docs/
 *.docx
 
+# Live client will submissions — PII + privileged instructions. Never commit.
+# (Seed/demo records live in automation/web/server.js INITIAL_SUBMISSIONS.)
+automation/web/data/submissions.json
+automation/web/data/submissions.backup*.json
+automation/web/uploads/
+
 # Media test assets - content belongs in Google Drive, not the repo
 *.mp4
 *.mov

@@ -29,6 +29,13 @@ const STATUS_OPTIONS = [
   'Completed'
 ];
 
+// Client submissions carry PII and privileged instructions, so the API requires
+// the chambers admin token. Same session key the rest of the suite uses.
+function adminAuthHeaders() {
+  const token = sessionStorage.getItem('vbl_admin_token');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 export default function SubmissionsModule({ onToast }) {
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -42,7 +49,10 @@ export default function SubmissionsModule({ onToast }) {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/will-submissions');
+      const res = await fetch('/api/will-submissions', { headers: adminAuthHeaders() });
+      if (res.status === 401) {
+        throw new Error('Session expired — sign in to the chambers suite again.');
+      }
       if (!res.ok) {
         throw new Error(`Failed to fetch submissions (${res.status})`);
       }
@@ -74,9 +84,12 @@ export default function SubmissionsModule({ onToast }) {
     try {
       const res = await fetch(`/api/will-submissions/${refId}/status`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...adminAuthHeaders() },
         body: JSON.stringify({ status: newStatus })
       });
+      if (res.status === 401) {
+        throw new Error('Session expired — sign in to the chambers suite again.');
+      }
       if (!res.ok) throw new Error('Status update failed');
       const data = await res.json();
       
