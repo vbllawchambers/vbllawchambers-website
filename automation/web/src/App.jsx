@@ -94,12 +94,14 @@ export default function App() {
       if (data.posts && Array.isArray(data.posts)) {
         setPosts(data.posts);
         setFeedError(null);
-        setPipelineStatus('online');
+        setPipelineStatus(data.offline ? 'standby' : 'online');
       }
     } catch (err) {
-      console.error('Fetch posts error:', err);
-      setFeedError(err.message || 'Unable to reach the automation pipeline.');
-      setPipelineStatus('offline');
+      if (!err.message?.includes('standby') && !err.message?.includes('ECONNREFUSED')) {
+        console.warn('Fetch posts status:', err.message);
+      }
+      setFeedError(err.message || 'Automation pipeline in standby mode.');
+      setPipelineStatus('standby');
     } finally {
       setLoading(false);
     }

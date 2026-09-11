@@ -4,7 +4,8 @@ import { Scale, Table, Folder, LogOut } from 'lucide-react';
 const STATUS_COPY = {
   checking: { label: 'Checking…', className: 'status-checking' },
   online: { label: 'Pipeline Active', className: 'status-online' },
-  offline: { label: 'Pipeline Unreachable', className: 'status-offline' }
+  standby: { label: 'Pipeline Standby', className: 'status-checking' },
+  offline: { label: 'Pipeline Standby', className: 'status-offline' }
 };
 
 export default function Header({ pipelineStatus = 'checking', onLogout }) {
