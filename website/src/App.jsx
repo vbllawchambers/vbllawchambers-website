@@ -62,7 +62,16 @@ export default function App() {
       const rawPath = decodeURIComponent(window.location.pathname).trim().replace(/\/+$/, '') || '/';
       const normalized = rawPath.toLowerCase();
 
-      // Aliases for Will Submission (handles spaces, underscores, alternate names)
+      // Aliases for Will Tracking & Submission
+      if (
+        normalized === '/track' ||
+        normalized === '/track-application' ||
+        normalized === '/track-status' ||
+        normalized === '/will-tracking'
+      ) {
+        return '/will-submission?tab=track';
+      }
+
       if (
         normalized === '/will-submission' ||
         normalized === '/will submission' ||
@@ -103,9 +112,11 @@ export default function App() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
+  const basePath = (currentPath || '/').split('?')[0];
+
   // Synchronize document title and description meta per route
   useEffect(() => {
-    const meta = ROUTE_METADATA[currentPath] || ROUTE_METADATA['/'];
+    const meta = ROUTE_METADATA[basePath] || ROUTE_METADATA['/'];
     if (meta) {
       document.title = meta.title;
       const descTag = document.querySelector('meta[name="description"]');
@@ -114,10 +125,10 @@ export default function App() {
       }
       const canonicalTag = document.querySelector('link[rel="canonical"]');
       if (canonicalTag) {
-        canonicalTag.setAttribute('href', `https://vbllawchambers.com${currentPath === '/' ? '' : currentPath}`);
+        canonicalTag.setAttribute('href', `https://vbllawchambers.com${basePath === '/' ? '' : basePath}`);
       }
     }
-  }, [currentPath]);
+  }, [basePath]);
 
   const navigateTo = (path) => {
     setCurrentPath(path);
@@ -126,7 +137,7 @@ export default function App() {
   };
 
   const renderPage = () => {
-    switch (currentPath) {
+    switch (basePath) {
       case '/about':
         return <About onNavigate={navigateTo} />;
       case '/practice-areas':
@@ -136,7 +147,7 @@ export default function App() {
       case '/contact':
         return <Contact onNavigate={navigateTo} />;
       case '/will-submission':
-        return <WillSubmission onNavigate={navigateTo} />;
+        return <WillSubmission onNavigate={navigateTo} currentPath={currentPath} />;
       case '/chambers-portal':
       case '/admin':
         return <AdminPortal onNavigate={navigateTo} />;
@@ -150,7 +161,7 @@ export default function App() {
     }
   };
 
-  const isAdminRoute = currentPath === '/admin' || currentPath === '/chambers-portal';
+  const isAdminRoute = basePath === '/admin' || basePath === '/chambers-portal';
 
   if (isAdminRoute) {
     return (

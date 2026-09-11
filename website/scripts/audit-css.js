@@ -38,7 +38,7 @@ files.forEach(f => {
           !cleaned.includes('==') && 
           !cleaned.includes('>') &&
           !cleaned.includes('<') &&
-          !['step', 'status', 'filterStatus', 'isSelected', 'New', 'Under', 'Scrutiny', 'Consultation', 'Scheduled', 'Submission', 'currentStep', 'formData', 'active', 'isOpen'].includes(cleaned) &&
+          !['step', 'status', 'filterStatus', 'isSelected', 'New', 'Under', 'Scrutiny', 'Consultation', 'Scheduled', 'Submission', 'currentStep', 'formData', 'active', 'isOpen', 'activeTab', 'submit', 'track', 'isCompleted', 'isCurrent'].includes(cleaned) &&
           !cleaned.includes('.')) {
         usedClasses.add(cleaned);
       }

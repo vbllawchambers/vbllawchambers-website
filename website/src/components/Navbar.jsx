@@ -63,6 +63,13 @@ export default function Navbar({ currentPath, onNavigate }) {
               </a>
             ))}
             <a
+              href="/will-submission?tab=track"
+              onClick={(e) => { e.preventDefault(); handleNavClick('/will-submission?tab=track'); }}
+              className="border border-slate-700 hover:border-amber-500/40 hover:bg-slate-800 text-slate-200 hover:text-amber-400 text-xs font-semibold px-3 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5"
+            >
+              <span>Track Status</span>
+            </a>
+            <a
               href="/contact"
               onClick={(e) => { e.preventDefault(); handleNavClick('/contact'); }}
               className="bg-amber-700 hover:bg-amber-800 text-white px-5 py-2.5 rounded-md text-sm font-semibold transition-colors shadow-sm"
@@ -104,6 +111,13 @@ export default function Navbar({ currentPath, onNavigate }) {
                 {item.label}
               </a>
             ))}
+            <a
+              href="/will-submission?tab=track"
+              onClick={(e) => { e.preventDefault(); handleNavClick('/will-submission?tab=track'); }}
+              className="block px-4 py-3 rounded-lg text-sm text-amber-400 hover:bg-slate-800 transition-colors font-medium"
+            >
+              Track Application Status
+            </a>
             <div className="pt-2">
               <a
                 href="/contact"

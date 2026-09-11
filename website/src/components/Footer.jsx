@@ -136,6 +136,15 @@ export default function Footer({ onNavigate }) {
               </li>
               <li>
                 <a
+                  href="/will-submission?tab=track"
+                  onClick={(e) => handleNavClick(e, '/will-submission?tab=track')}
+                  className="text-amber-400 hover:text-amber-500 font-medium transition-colors"
+                >
+                  Track Application Status
+                </a>
+              </li>
+              <li>
+                <a
                   href="/contact"
                   onClick={(e) => handleNavClick(e, '/contact')}
                   className="text-slate-400 hover:text-amber-400 transition-colors"

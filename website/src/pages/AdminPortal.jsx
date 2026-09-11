@@ -21,73 +21,9 @@ import {
   FileCheck
 } from 'lucide-react';
 
-const CHAMBERS_PASSCODE = (import.meta.env.VITE_CHAMBERS_PASSCODE || 'vbl2026').toLowerCase().trim();
+import { INITIAL_SAMPLE_SUBMISSIONS, getStoredSubmissions } from '../data/sampleSubmissions';
 
-// Realistic sample submissions for demonstration & immediate testing
-const INITIAL_SAMPLE_SUBMISSIONS = [
-  {
-    refId: 'VBL-829104',
-    date: '2026-09-10 11:30 AM',
-    fullName: 'P. Venkata Ramana Rao',
-    parentSpouseName: 'S/o Late Subba Rao',
-    age: '64',
-    phone: '+91 94402 81736',
-    email: 'pvramana.kavali@gmail.com',
-    city: 'Kavali',
-    address: 'Plot 42, RTC Colony, Kavali - 524201',
-    serviceType: 'draft_new',
-    serviceLabel: 'Fresh Will Drafting',
-    assetTypes: ['Agricultural / Farm Lands', 'Residential / Commercial Real Estate'],
-    executorName: 'P. Krishna Chaitanya (Son)',
-    specialInstructions: 'Need equal partition of 4.5 acres agricultural land at Musunuru between two sons, with lifetime usufruct rights to wife.',
-    documents: [
-      { name: 'Pattadar_Passbook_Musunuru.pdf', size: '2.4 MB', driveUrl: 'https://drive.google.com/drive/folders/1Q171pLkFgucgHO0bJ1lRWlxC3en-tHZz' },
-      { name: 'Aadhaar_Card_Testator.pdf', size: '820 KB', driveUrl: 'https://drive.google.com/drive/folders/1Q171pLkFgucgHO0bJ1lRWlxC3en-tHZz' },
-    ],
-    status: 'Under Scrutiny',
-  },
-  {
-    refId: 'VBL-741295',
-    date: '2026-09-09 04:15 PM',
-    fullName: 'K. Lakshmi Narasamma',
-    parentSpouseName: 'W/o K. Venkateswarlu',
-    age: '58',
-    phone: '+91 98480 39281',
-    email: 'lakshmi.narasamma58@yahoo.com',
-    city: 'Singarayakonda',
-    address: 'Near Old Bus Stand, Singarayakonda, Prakasam Dist.',
-    serviceType: 'review_existing',
-    serviceLabel: 'Scrutiny of Existing Draft',
-    assetTypes: ['Residential / Commercial Real Estate', 'Gold, Jewelry & Heirlooms'],
-    executorName: 'K. Sridhar (Eldest Son)',
-    specialInstructions: 'Existing draft written in 2018 in Telugu. Want to verify whether registered gift deed of commercial shop affects this draft.',
-    documents: [
-      { name: 'Existing_Telugu_Will_Draft.pdf', size: '3.1 MB', driveUrl: 'https://drive.google.com/drive/folders/1Q171pLkFgucgHO0bJ1lRWlxC3en-tHZz' },
-      { name: 'Commercial_Shop_SaleDeed.pdf', size: '4.8 MB', driveUrl: 'https://drive.google.com/drive/folders/1Q171pLkFgucgHO0bJ1lRWlxC3en-tHZz' },
-    ],
-    status: 'New Submission',
-  },
-  {
-    refId: 'VBL-610283',
-    date: '2026-09-08 02:45 PM',
-    fullName: 'B. Srinivasa Reddy',
-    parentSpouseName: 'S/o Chenna Reddy',
-    age: '52',
-    phone: '+91 99891 72615',
-    email: 'bsreddy.advocacy@gmail.com',
-    city: 'Kandukur',
-    address: 'Main Bazaar, Kandukur',
-    serviceType: 'codicil',
-    serviceLabel: 'Codicil (Amendment)',
-    assetTypes: ['Bank Deposits, Mutual Funds & Stocks', 'Business Ownership & Partnership Stakes'],
-    executorName: 'Self & Wife joint executors',
-    specialInstructions: 'Need to add newly opened bank fixed deposits and designate charitable trust contribution of 10% interest proceeds.',
-    documents: [
-      { name: 'Original_Registered_Will_2021.pdf', size: '1.9 MB', driveUrl: 'https://drive.google.com/drive/folders/1Q171pLkFgucgHO0bJ1lRWlxC3en-tHZz' },
-    ],
-    status: 'Consultation Scheduled',
-  }
-];
+const CHAMBERS_PASSCODE = (import.meta.env.VITE_CHAMBERS_PASSCODE || 'vbl2026').toLowerCase().trim();
 
 export default function AdminPortal({ onNavigate }) {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -103,20 +39,9 @@ export default function AdminPortal({ onNavigate }) {
 
   // Load submissions from local storage + API + sample data
   useEffect(() => {
-    const savedLocal = localStorage.getItem('vbl_will_submissions');
-    let merged = [...INITIAL_SAMPLE_SUBMISSIONS];
-    if (savedLocal) {
-      try {
-        const parsed = JSON.parse(savedLocal);
-        if (Array.isArray(parsed)) {
-          merged = [...parsed, ...INITIAL_SAMPLE_SUBMISSIONS];
-        }
-      } catch (e) {
-        console.error('Error parsing local submissions:', e);
-      }
-    }
-    setSubmissions(merged);
-    setSelectedSubmission(merged[0] || null);
+    const loaded = getStoredSubmissions();
+    setSubmissions(loaded);
+    setSelectedSubmission(loaded[0] || null);
 
     // Also attempt fetching from API if backend is active
     fetch('/api/will-submissions')
@@ -149,9 +74,13 @@ export default function AdminPortal({ onNavigate }) {
   };
 
   const handleStatusChange = (refId, newStatus) => {
-    setSubmissions((prev) =>
-      prev.map((sub) => (sub.refId === refId ? { ...sub, status: newStatus } : sub))
-    );
+    setSubmissions((prev) => {
+      const updated = prev.map((sub) => (sub.refId === refId ? { ...sub, status: newStatus } : sub));
+      try {
+        localStorage.setItem('vbl_will_submissions', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
     if (selectedSubmission && selectedSubmission.refId === refId) {
       setSelectedSubmission((prev) => ({ ...prev, status: newStatus }));
     }
