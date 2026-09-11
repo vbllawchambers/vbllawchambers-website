@@ -434,14 +434,18 @@ app.post('/api/drive/provision-pending', requireAdminAuth, async (req, res) => {
 // Reports which persistence backend is actually serving requests. Without this
 // a silent demotion from Supabase to the local cache looks identical to normal
 // operation, and records quietly stop being durable.
-app.get('/api/health', (req, res) => {
+app.get('/api/health', async (req, res) => {
+  // Probe rather than report the last thing we happened to see: straight after
+  // a restart no query has run yet, and the cached state would say
+  // "local-cache" while Supabase is healthy.
+  const storage = await db.ensureProbed();
   res.json({
     status: 'ok',
     practice: 'VBL Law Chambers',
     client: 'Advocate in Kavali, AP',
     focus: 'Will Drafting & Legal Presence',
     framework: 'React + Vite + Express',
-    storage: db.getBackendStatus(),
+    storage,
     driveVaultRootId: DRIVE_VAULT_ROOT_ID,
     timestamp: new Date().toISOString()
   });

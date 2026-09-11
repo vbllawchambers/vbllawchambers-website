@@ -160,7 +160,10 @@ echo "    Purging only one remote leaves the data public on the other."
 read -r -p "    Type PUSH to force-push to both remotes: " CONFIRM2
 [ "$CONFIRM2" = "PUSH" ] || { echo "Stopped before push. Rewritten mirror kept at $MIRROR"; exit 1; }
 
-git remote set-url origin "$ORIGIN"
+# git-filter-repo deliberately REMOVES the origin remote after a rewrite, to
+# stop an accidental push back to the source. So these must add the remotes,
+# not set-url them - set-url fails with "No such remote 'origin'".
+git remote add origin "$ORIGIN" 2>/dev/null || git remote set-url origin "$ORIGIN"
 git push --force --all origin
 git push --force --tags origin
 green "    origin rewritten"
@@ -188,11 +191,20 @@ cat <<MANUAL
        Check for forks first; each fork must be deleted by its owner, and
        GitHub support can help with ones you do not control.
 
-    2. RE-CLONE your working copy. Do not reuse the old one - pushing from it
-       restores the PII.
+    2. RESET your working copy IN PLACE. Do NOT re-clone: .env,
+       automation/secrets/, the live data/submissions.json and uploads/ are all
+       gitignored, so a fresh clone would destroy the live client registry and
+       every credential.
 
-         cd .. && rm -rf advocate-social-automation
-         git clone $ORIGIN advocate-social-automation
+         git fetch origin --prune
+         git fetch personal-backup --prune   # stale tracking refs pin old objects
+         git reset --hard origin/main
+         git reflog expire --expire=now --all
+         git gc --prune=now
+
+       Verify locally:
+         git rev-list --objects --all \\
+           | grep -E 'submissions\\.json|sampleSubmissions\\.js'   # expect no output
 
     3. ASK GITHUB SUPPORT to garbage-collect the stale objects, quoting both
        repositories and stating they contained personal data:

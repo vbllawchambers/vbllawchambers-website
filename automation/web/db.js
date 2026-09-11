@@ -137,6 +137,43 @@ export function getBackendStatus() {
   };
 }
 
+/**
+ * Establishes the backend state with a cheap real query.
+ *
+ * Without this, the status above reports whatever the last operation saw - so
+ * immediately after a restart, before any request has touched the database, it
+ * reported "local-cache" even when Supabase was perfectly healthy. A health
+ * check or uptime monitor polling straight after a deploy would therefore read
+ * a degraded backend that was not degraded.
+ */
+let probed = false;
+let probeInFlight = null;
+
+export function ensureProbed() {
+  if (!supabase || probed) return Promise.resolve(getBackendStatus());
+  if (probeInFlight) return probeInFlight;
+
+  probeInFlight = supabase
+    .from('will_submissions')
+    .select('ref_id')
+    .limit(1)
+    .then(({ error }) => {
+      if (error) noteFailure('probe', error);
+      else noteSuccess();
+      probed = true;
+      probeInFlight = null;
+      return getBackendStatus();
+    })
+    .catch((err) => {
+      noteFailure('probe', err);
+      probed = true;
+      probeInFlight = null;
+      return getBackendStatus();
+    });
+
+  return probeInFlight;
+}
+
 // ==============================================================================
 // Local write-through cache
 // ==============================================================================

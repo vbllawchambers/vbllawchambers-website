@@ -118,8 +118,33 @@ git push backup --force --tags
 
 ## After the rewrite
 
-1. **Re-clone** your working copy. Do not reuse the old one — pushing from it
-   restores the PII.
+1. **Reset your working copy in place — do NOT re-clone.**
+
+   The usual advice after a history rewrite is to re-clone, but that is wrong
+   for this repository: `.env`, `automation/secrets/`, the live
+   `automation/web/data/submissions.json` and `automation/web/uploads/` are all
+   gitignored, so a fresh clone would silently destroy the practice's live
+   client registry and every credential.
+
+   ```bash
+   git fetch origin --prune
+   git fetch personal-backup --prune      # stale tracking refs keep old objects alive
+   git reset --hard origin/main
+   git reflog expire --expire=now --all
+   git gc --prune=now
+   ```
+
+   Then confirm the old objects are gone locally:
+
+   ```bash
+   git rev-list --objects --all \
+     | grep -E 'submissions\.json|sampleSubmissions\.js|submissions\.backup'
+   # expect no output
+   ```
+
+   The prune of **both** remotes matters: a remote-tracking ref still pointing
+   at the pre-rewrite commit keeps the entire old history reachable, and `gc`
+   will not drop it.
 2. GitHub keeps unreferenced commits reachable for a while and they stay visible
    via the API. Open a support request asking GitHub to garbage-collect the
    stale objects, quoting the repository and the fact that it contained

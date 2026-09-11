@@ -63,3 +63,6 @@ automation/web/uploads/
 uploads/
 **/uploads/*
 !**/uploads/.gitkeep
+
+# Supabase CLI scratch state. pooler-url embeds live DB credentials.
+supabase/.temp/
