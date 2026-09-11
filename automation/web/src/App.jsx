@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Header from './components/Header';
 import Toast from './components/Toast';
 import UploaderModule from './components/UploaderModule';
-import { Lock, KeyRound, AlertCircle, Scale } from 'lucide-react';
+import SubmissionsModule from './components/SubmissionsModule';
+import { Lock, KeyRound, AlertCircle, Scale, Share2, FileText } from 'lucide-react';
 
 export default function App() {
   const [authToken, setAuthToken] = useState(() => sessionStorage.getItem('vbl_admin_token') || '');
@@ -10,6 +11,7 @@ export default function App() {
   const [passcode, setPasscode] = useState('');
   const [authError, setAuthError] = useState(null);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [activeTab, setActiveTab] = useState('submissions'); // 'submissions' | 'uploader'
 
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -281,15 +283,79 @@ export default function App() {
 
       <Header pipelineStatus={pipelineStatus} onLogout={handleLogout} />
 
-      <main className="main-layout">
-        <UploaderModule
-          posts={posts}
-          loading={loading}
-          error={feedError}
-          onRefresh={fetchPosts}
-          onUploadSuccess={fetchPosts}
-          onToast={addToast}
-        />
+      <main className="main-layout" style={{ maxWidth: '1440px', margin: '0 auto', padding: '24px 20px' }}>
+        {/* Module Switcher Tabs */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          marginBottom: '24px'
+        }}>
+          <div style={{
+            background: '#FFFFFF',
+            padding: '4px',
+            borderRadius: '12px',
+            border: '1px solid #E2E8F0',
+            display: 'inline-flex',
+            boxShadow: '0 2px 8px rgba(15, 41, 66, 0.05)',
+            gap: '4px'
+          }}>
+            <button
+              type="button"
+              onClick={() => setActiveTab('submissions')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '10px 20px',
+                borderRadius: '8px',
+                border: 'none',
+                background: activeTab === 'submissions' ? '#0F2942' : 'transparent',
+                color: activeTab === 'submissions' ? '#FFFFFF' : '#64748B',
+                fontWeight: 600,
+                fontSize: '0.875rem',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              <FileText size={16} />
+              <span>Client Will Submissions</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('uploader')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '10px 20px',
+                borderRadius: '8px',
+                border: 'none',
+                background: activeTab === 'uploader' ? '#0F2942' : 'transparent',
+                color: activeTab === 'uploader' ? '#FFFFFF' : '#64748B',
+                fontWeight: 600,
+                fontSize: '0.875rem',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              <Share2 size={16} />
+              <span>Social Publishing Suite</span>
+            </button>
+          </div>
+        </div>
+
+        {activeTab === 'submissions' ? (
+          <SubmissionsModule onToast={addToast} />
+        ) : (
+          <UploaderModule
+            posts={posts}
+            loading={loading}
+            error={feedError}
+            onRefresh={fetchPosts}
+            onUploadSuccess={fetchPosts}
+            onToast={addToast}
+          />
+        )}
       </main>
 
       <Toast toasts={toasts} />

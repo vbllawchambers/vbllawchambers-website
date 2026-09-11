@@ -201,16 +201,8 @@ export default function WillSubmission({ onNavigate, currentPath }) {
         submissionData.append('documents', file);
       });
 
-      // Attempt background dispatch to backend API if available
-      try {
-        fetch('/api/will-submission', {
-          method: 'POST',
-          body: submissionData,
-        }).catch(() => {});
-      } catch (e) {}
-
-      // Save to localStorage so Chambers Portal instantly reflects it
-      const newSubmissionRecord = {
+      // Default local fallback record
+      let finalSubmissionRecord = {
         refId: generatedRef,
         date: new Date().toLocaleDateString('en-IN', {
           year: 'numeric',
@@ -241,13 +233,30 @@ export default function WillSubmission({ onNavigate, currentPath }) {
         status: 'New Submission'
       };
 
+      // Dispatch to backend API
       try {
-        saveSubmission(newSubmissionRecord);
+        const response = await fetch('/api/will-submission', {
+          method: 'POST',
+          body: submissionData,
+        });
+        if (response.ok) {
+          const resData = await response.json();
+          if (resData.submission) {
+            finalSubmissionRecord = resData.submission;
+          }
+        }
+      } catch (apiErr) {
+        console.warn('Backend API submission deferred:', apiErr);
+      }
+
+      // Save to localStorage so Chambers Portal and Client Tracker immediately have access
+      try {
+        saveSubmission(finalSubmissionRecord);
       } catch (cacheErr) {
         console.warn('Failed to cache submission locally:', cacheErr);
       }
 
-      setReferenceId(generatedRef);
+      setReferenceId(finalSubmissionRecord.refId || generatedRef);
       setSubmitted(true);
     } finally {
       setIsSubmitting(false);

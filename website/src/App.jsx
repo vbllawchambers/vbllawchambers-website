@@ -167,8 +167,8 @@ export default function App() {
     return (
       <div className="min-h-screen bg-slate-100 text-slate-900">
         <AdminPortal onNavigate={navigateTo} />
-        <Analytics />
-        <SpeedInsights />
+        {import.meta.env.PROD && <Analytics />}
+        {import.meta.env.PROD && <SpeedInsights />}
       </div>
     );
   }
@@ -180,8 +180,8 @@ export default function App() {
         {renderPage()}
       </main>
       <Footer onNavigate={navigateTo} />
-      <Analytics />
-      <SpeedInsights />
+      {import.meta.env.PROD && <Analytics />}
+      {import.meta.env.PROD && <SpeedInsights />}
     </div>
   );
 }

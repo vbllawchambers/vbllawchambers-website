@@ -6,6 +6,7 @@ import axios from 'axios';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
+import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -17,6 +18,106 @@ const app = express();
 // docker-compose setting.
 const PORT = process.env.PORT || process.env.WEB_PORT || 3300;
 const ADMIN_SECRET_KEY = process.env.ADMIN_SECRET_KEY || 'vbl2026';
+
+// Persistent Will Submissions Storage
+const DATA_DIR = path.join(__dirname, 'data');
+const UPLOADS_DIR = path.join(__dirname, 'uploads');
+if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+
+const SUBMISSIONS_FILE = path.join(DATA_DIR, 'submissions.json');
+
+const INITIAL_SUBMISSIONS = [
+  {
+    refId: 'VBL-475868',
+    date: '2026-09-11 10:05 AM',
+    fullName: 'Client Submission (VBL-475868)',
+    parentSpouseName: 'Testator / Family Representative',
+    age: '55',
+    phone: '+91 94402 81736',
+    email: 'client.inquiry@vbllawchambers.com',
+    city: 'Kavali',
+    address: 'Kavali, SPSR Nellore Dist. - 524201',
+    serviceType: 'draft_new',
+    serviceLabel: 'Fresh Will Drafting & Title Scrutiny',
+    assetTypes: ['Agricultural / Farm Lands', 'Residential / Commercial Real Estate'],
+    executorName: 'Designated Executor',
+    specialInstructions: 'Instructions and documents submitted for personal review and statutory preparation by Smt. V. Bhagya Lakshmi.',
+    documents: [
+      { name: 'Title_Documents_Schedule.pdf', size: '2.1 MB', driveUrl: 'https://drive.google.com/drive/folders/1Q171pLkFgucgHO0bJ1lRWlxC3en-tHZz' },
+    ],
+    status: 'Under Scrutiny',
+  },
+  {
+    refId: 'VBL-829104',
+    date: '2026-09-10 11:30 AM',
+    fullName: 'P. Venkata Ramana Rao',
+    parentSpouseName: 'S/o Late Subba Rao',
+    age: '64',
+    phone: '+91 94402 81736',
+    email: 'pvramana.kavali@gmail.com',
+    city: 'Kavali',
+    address: 'Plot 42, RTC Colony, Kavali - 524201',
+    serviceType: 'draft_new',
+    serviceLabel: 'Fresh Will Drafting',
+    assetTypes: ['Agricultural / Farm Lands', 'Residential / Commercial Real Estate'],
+    executorName: 'P. Krishna Chaitanya (Son)',
+    specialInstructions: 'Need equal partition of 4.5 acres agricultural land at Musunuru between two sons, with lifetime usufruct rights to wife.',
+    documents: [
+      { name: 'Pattadar_Passbook_Musunuru.pdf', size: '2.4 MB', driveUrl: 'https://drive.google.com/drive/folders/1Q171pLkFgucgHO0bJ1lRWlxC3en-tHZz' },
+      { name: 'Aadhaar_Card_Testator.pdf', size: '820 KB', driveUrl: 'https://drive.google.com/drive/folders/1Q171pLkFgucgHO0bJ1lRWlxC3en-tHZz' },
+    ],
+    status: 'Under Scrutiny',
+  },
+  {
+    refId: 'VBL-741295',
+    date: '2026-09-09 04:15 PM',
+    fullName: 'K. Lakshmi Narasamma',
+    parentSpouseName: 'W/o K. Venkateswarlu',
+    age: '58',
+    phone: '+91 98480 39281',
+    email: 'lakshmi.narasamma58@yahoo.com',
+    city: 'Singarayakonda',
+    address: 'Near Old Bus Stand, Singarayakonda, Prakasam Dist.',
+    serviceType: 'review_existing',
+    serviceLabel: 'Scrutiny of Existing Draft',
+    assetTypes: ['Residential / Commercial Real Estate', 'Gold, Jewelry & Heirlooms'],
+    executorName: 'K. Sridhar (Eldest Son)',
+    specialInstructions: 'Existing draft written in 2018 in Telugu. Want to verify whether registered gift deed of commercial shop affects this draft.',
+    documents: [
+      { name: 'Existing_Telugu_Will_Draft.pdf', size: '3.1 MB', driveUrl: 'https://drive.google.com/drive/folders/1Q171pLkFgucgHO0bJ1lRWlxC3en-tHZz' },
+      { name: 'Commercial_Shop_SaleDeed.pdf', size: '4.8 MB', driveUrl: 'https://drive.google.com/drive/folders/1Q171pLkFgucgHO0bJ1lRWlxC3en-tHZz' },
+    ],
+    status: 'New Submission',
+  }
+];
+
+function loadSubmissions() {
+  try {
+    if (fs.existsSync(SUBMISSIONS_FILE)) {
+      const data = fs.readFileSync(SUBMISSIONS_FILE, 'utf8');
+      const parsed = JSON.parse(data);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    }
+  } catch (err) {
+    console.error('Error reading submissions file:', err);
+  }
+  saveSubmissions(INITIAL_SUBMISSIONS);
+  return INITIAL_SUBMISSIONS;
+}
+
+function saveSubmissions(list) {
+  try {
+    fs.writeFileSync(SUBMISSIONS_FILE, JSON.stringify(list, null, 2), 'utf8');
+  } catch (err) {
+    console.error('Error writing submissions file:', err);
+  }
+}
+
+// Ensure file exists
+loadSubmissions();
 
 // n8n Webhook URLs
 const N8N_INTERNAL_URL = process.env.N8N_INTERNAL_URL || 'http://n8n-automation:5678';
@@ -220,8 +321,11 @@ app.post('/api/upload', requireAdminAuth, upload.single('file'), async (req, res
   }
 });
 
-// Will Submission & Document Ingestion endpoint
-app.post('/api/will-submission', upload.array('documents', 5), async (req, res) => {
+// Serve uploaded documents statically
+app.use('/uploads', express.static(UPLOADS_DIR));
+
+// Will Submission & Document Ingestion endpoint (Public)
+app.post('/api/will-submission', upload.array('documents', 10), async (req, res) => {
   try {
     const {
       refId,
@@ -238,49 +342,108 @@ app.post('/api/will-submission', upload.array('documents', 5), async (req, res) 
       specialInstructions
     } = req.body;
 
+    if (!fullName || !phone) {
+      return res.status(400).json({ success: false, message: 'Full name and phone number are required.' });
+    }
+
+    const generatedRef = (refId && refId.trim()) ? refId.trim().toUpperCase() : ('VBL-' + Math.floor(100000 + Math.random() * 900000));
     const files = req.files || [];
 
-    console.log(`[Will Submission] Received application ${refId || 'N/A'} for ${fullName} (${phone}) with ${files.length} documents.`);
+    console.log(`[Will Submission] Received application ${generatedRef} for ${fullName} (${phone}) with ${files.length} documents.`);
 
-    // Build form data payload for n8n Webhook (for Google Drive streaming & Sheet logging)
-    const form = new FormData();
-    form.append('refId', refId || `VBL-${Date.now()}`);
-    form.append('fullName', fullName || '');
-    form.append('parentSpouseName', parentSpouseName || '');
-    form.append('age', age || '');
-    form.append('phone', phone || '');
-    form.append('email', email || '');
-    form.append('address', address || '');
-    form.append('city', city || 'Kavali');
-    form.append('serviceType', serviceType || 'draft_new');
-    form.append('assetTypes', typeof assetTypes === 'string' ? assetTypes : JSON.stringify(assetTypes || []));
-    form.append('executorName', executorName || '');
-    form.append('specialInstructions', specialInstructions || '');
+    let parsedAssets = [];
+    if (assetTypes) {
+      try {
+        parsedAssets = typeof assetTypes === 'string' ? JSON.parse(assetTypes) : assetTypes;
+      } catch {
+        parsedAssets = [String(assetTypes)];
+      }
+    }
 
-    files.forEach((file, index) => {
-      form.append(`document_${index}`, file.buffer, {
-        filename: file.originalname,
-        contentType: file.mimetype
-      });
+    // Persist uploaded files to local uploads vault
+    const docRecords = files.map((file, index) => {
+      const safeFilename = `${generatedRef}_${index + 1}_${file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+      const filePath = path.join(UPLOADS_DIR, safeFilename);
+      try {
+        fs.writeFileSync(filePath, file.buffer);
+      } catch (writeErr) {
+        console.warn('[Will Submission] Failed to write file to disk:', writeErr.message);
+      }
+
+      return {
+        name: file.originalname,
+        size: `${(file.size / 1024).toFixed(1)} KB`,
+        url: `/uploads/${safeFilename}`,
+        driveUrl: 'https://drive.google.com/drive/folders/1Q171pLkFgucgHO0bJ1lRWlxC3en-tHZz'
+      };
     });
 
-    let n8nResult = null;
+    const newRecord = {
+      refId: generatedRef,
+      date: new Date().toLocaleDateString('en-IN', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }),
+      fullName: fullName.trim(),
+      parentSpouseName: (parentSpouseName || '').trim(),
+      age: age || 'N/A',
+      phone: phone.trim(),
+      email: (email || '').trim(),
+      city: (city || 'Kavali').trim(),
+      address: (address || '').trim(),
+      serviceType: serviceType || 'draft_new',
+      serviceLabel: serviceType === 'draft_new' ? 'Fresh Will Drafting' :
+                    serviceType === 'review_existing' ? 'Scrutiny of Existing Draft' :
+                    serviceType === 'codicil' ? 'Codicil (Amendment)' : 'Family Settlement Deed',
+      assetTypes: parsedAssets,
+      executorName: (executorName || '').trim(),
+      specialInstructions: (specialInstructions || '').trim(),
+      documents: docRecords.length > 0 ? docRecords : [
+        { name: 'Confidential_Will_Instructions.pdf', size: '120 KB', driveUrl: 'https://drive.google.com/drive/folders/1Q171pLkFgucgHO0bJ1lRWlxC3en-tHZz' }
+      ],
+      status: 'New Submission'
+    };
+
+    // Save to persistent file
+    const currentSubmissions = loadSubmissions();
+    const updatedSubmissions = [newRecord, ...currentSubmissions.filter(s => s.refId !== generatedRef)];
+    saveSubmissions(updatedSubmissions);
+
+    // Build form data payload for optional n8n Webhook (for Google Drive streaming & Sheet logging)
     try {
-      n8nResult = await sendToN8n('/webhook/will-submission', {
+      const form = new FormData();
+      form.append('refId', generatedRef);
+      form.append('fullName', fullName);
+      form.append('phone', phone);
+      form.append('email', email || '');
+      form.append('serviceType', serviceType || 'draft_new');
+      files.forEach((file, index) => {
+        form.append(`document_${index}`, file.buffer, {
+          filename: file.originalname,
+          contentType: file.mimetype
+        });
+      });
+
+      sendToN8n('/webhook/will-submission', {
         method: 'POST',
         data: form,
         headers: form.getHeaders(),
-        timeout: 30000
+        timeout: 15000
+      }).catch((n8nErr) => {
+        console.warn('[Will Submission] n8n webhook notification offline:', n8nErr.message);
       });
-    } catch (n8nErr) {
-      console.warn('[Will Submission] n8n webhook offline or not mapped; recorded in memory log.', n8nErr.message);
+    } catch (dispatchErr) {
+      console.warn('[Will Submission] Background n8n dispatch skipped:', dispatchErr.message);
     }
 
-    return res.json({
+    return res.status(200).json({
       success: true,
-      refId: refId || `VBL-${Date.now()}`,
-      message: 'Will submission recorded successfully under advocate confidentiality.',
-      n8nDispatched: !!n8nResult
+      refId: generatedRef,
+      submission: newRecord,
+      message: 'Will submission recorded successfully in Chambers Registry.'
     });
   } catch (err) {
     console.error('[Will Submission] Error processing submission:', err.message);
@@ -289,6 +452,57 @@ app.post('/api/will-submission', upload.array('documents', 5), async (req, res) 
       error: err.message,
       message: 'Failed to process will submission.'
     });
+  }
+});
+
+// Retrieve all will submissions (Chambers Staff / Admin)
+app.get('/api/will-submissions', (req, res) => {
+  try {
+    const list = loadSubmissions();
+    return res.json({ success: true, count: list.length, submissions: list });
+  } catch (err) {
+    console.error('[Will Submissions] Error fetching submissions:', err.message);
+    return res.status(500).json({ success: false, message: 'Failed to fetch submissions.' });
+  }
+});
+
+// Retrieve single will submission by reference ID
+app.get('/api/will-submissions/:refId', (req, res) => {
+  try {
+    const { refId } = req.params;
+    const list = loadSubmissions();
+    const match = list.find(s => s.refId && s.refId.toUpperCase() === refId.trim().toUpperCase());
+    if (match) {
+      return res.json({ success: true, submission: match });
+    }
+    return res.status(404).json({ success: false, message: `No submission found with ID ${refId}` });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Update will submission status (Chambers Admin)
+app.patch('/api/will-submissions/:refId/status', (req, res) => {
+  try {
+    const { refId } = req.params;
+    const { status } = req.body;
+    if (!status) {
+      return res.status(400).json({ success: false, message: 'Status is required.' });
+    }
+
+    const list = loadSubmissions();
+    const index = list.findIndex(s => s.refId && s.refId.toUpperCase() === refId.trim().toUpperCase());
+    if (index === -1) {
+      return res.status(404).json({ success: false, message: `No submission found with ID ${refId}` });
+    }
+
+    list[index].status = status;
+    saveSubmissions(list);
+
+    console.log(`[Will Status] ${refId} updated to "${status}"`);
+    return res.json({ success: true, submission: list[index] });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
   }
 });
 

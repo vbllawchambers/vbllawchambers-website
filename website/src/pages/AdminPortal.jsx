@@ -84,6 +84,11 @@ export default function AdminPortal({ onNavigate }) {
     if (selectedSubmission && selectedSubmission.refId === refId) {
       setSelectedSubmission((prev) => ({ ...prev, status: newStatus }));
     }
+    fetch(`/api/will-submissions/${refId}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus })
+    }).catch(() => {});
   };
 
   const filteredSubmissions = submissions.filter((sub) => {
