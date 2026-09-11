@@ -7,6 +7,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import fs from 'fs';
+import * as db from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -537,10 +538,8 @@ app.post('/api/will-submission', upload.array('documents', 10), async (req, res)
       status: 'New Submission'
     };
 
-    // Save to persistent file
-    const currentSubmissions = loadSubmissions();
-    const updatedSubmissions = [newRecord, ...currentSubmissions.filter(s => s.refId !== generatedRef)];
-    saveSubmissions(updatedSubmissions);
+    // Save to persistent storage (Supabase PostgreSQL + local cache)
+    await db.saveSubmission(newRecord);
 
     // Build form data payload for n8n Webhook (creates dedicated folder in Drive & logs sheet)
     try {
@@ -609,9 +608,9 @@ app.post('/api/will-submission', upload.array('documents', 10), async (req, res)
 // Retrieve all will submissions (Chambers Staff / Admin)
 // PROTECTED: returns every client's PII (name, phone, address), privileged
 // drafting instructions and document vault links. Must never be public.
-app.get('/api/will-submissions', requireAdminAuth, (req, res) => {
+app.get('/api/will-submissions', requireAdminAuth, async (req, res) => {
   try {
-    const list = loadSubmissions();
+    const list = await db.getSubmissions();
     return res.json({ success: true, count: list.length, submissions: list });
   } catch (err) {
     console.error('[Will Submissions] Error fetching submissions:', err.message);
@@ -624,11 +623,10 @@ app.get('/api/will-submissions', requireAdminAuth, (req, res) => {
 // without an account, so this cannot require the admin key. Access is limited
 // to whoever holds the specific VBL-XXXXXX reference. Do not add auth here
 // without also reworking the client-facing tracker in WillSubmission.jsx.
-app.get('/api/will-submissions/:refId', (req, res) => {
+app.get('/api/will-submissions/:refId', async (req, res) => {
   try {
     const { refId } = req.params;
-    const list = loadSubmissions();
-    const match = list.find(s => s.refId && s.refId.toUpperCase() === refId.trim().toUpperCase());
+    const match = await db.getSubmissionByRef(refId);
     if (match) {
       return res.json({ success: true, submission: match });
     }
@@ -640,7 +638,7 @@ app.get('/api/will-submissions/:refId', (req, res) => {
 
 // Update will submission status (Chambers Admin)
 // PROTECTED: mutates a client's statutory scrutiny stage.
-app.patch('/api/will-submissions/:refId/status', requireAdminAuth, (req, res) => {
+app.patch('/api/will-submissions/:refId/status', requireAdminAuth, async (req, res) => {
   try {
     const { refId } = req.params;
     const { status } = req.body;
@@ -648,17 +646,13 @@ app.patch('/api/will-submissions/:refId/status', requireAdminAuth, (req, res) =>
       return res.status(400).json({ success: false, message: 'Status is required.' });
     }
 
-    const list = loadSubmissions();
-    const index = list.findIndex(s => s.refId && s.refId.toUpperCase() === refId.trim().toUpperCase());
-    if (index === -1) {
+    const updated = await db.updateSubmissionStatus(refId, status);
+    if (!updated) {
       return res.status(404).json({ success: false, message: `No submission found with ID ${refId}` });
     }
 
-    list[index].status = status;
-    saveSubmissions(list);
-
     console.log(`[Will Status] ${refId} updated to "${status}"`);
-    return res.json({ success: true, submission: list[index] });
+    return res.json({ success: true, submission: updated });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
   }
