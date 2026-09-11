@@ -51,8 +51,14 @@ is precisely how our Threads and YouTube tokens went stale while the dashboard
 still reported four channels connected: a `disconnect` was being retried forever
 instead of surfacing as "reconnect this channel".
 
-**Action:** give `content_calendar.platform_statuses` a per-platform
-`{ state, kind, lastError }` and stop retrying anything classified `disconnect`.
+**Implemented** in [`automation/web/publishing/classify.js`](../web/publishing/classify.js)
+as `AUTH_EXPIRED` / `TRANSIENT_NETWORK` / `FATAL_PAYLOAD`, reading Meta's
+structured error codes (190 + subcodes 458–492 → auth; the 2207xxx media family
+→ payload; 4/17/32/613 → throttle) and Google's `reason` field in preference to
+the HTTP status, which is too coarse to separate "quota exhausted" from
+"permission revoked". `nextAction()` returns `retry` with jittered exponential
+backoff or `halt`; an `AUTH_EXPIRED` channel is marked **Needs Reconnect**
+rather than retried.
 
 ## 3. Resumability — what actually matters on Render
 
@@ -87,6 +93,18 @@ never double-posts.
 
 Because state lives in Supabase, the container going to sleep between steps is
 harmless — which is exactly the "wake 2–4 times a day, then sleep" model we want.
+
+**Implemented** in [`automation/web/publishing/state.js`](../web/publishing/state.js)
+(`queued → pending → ready → completed | failed`), persisted via
+`db.getPublishState` / `db.savePublishState` into
+`content_calendar.platform_statuses`, `publish_state`, `last_attempt_at` and
+`failure_kind`. Both the `pending` and `ready` transitions re-check the
+container and treat `PUBLISHED` as already done.
+
+`node automation/web/publishing/publishing.test.mjs` — 27 tests, including
+"CRASH AFTER PUBLISH: does not post twice", which asserts `publishContainer` is
+called **zero** times when a stale `ready` state meets an already-published
+container.
 
 ## 4. Provider shape to implement
 

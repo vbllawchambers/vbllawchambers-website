@@ -199,6 +199,7 @@ function rowToSubmission(row) {
     driveFolderName: row.folder_name,
     driveFolderId: row.drive_folder_id || '',
     driveFolderUrl: row.drive_folder_url || '',
+    driveProvisionState: row.drive_provision_state || 'pending',
     status: row.status,
     documents: (row.documents || []).map(doc => ({
       name: doc.file_name,
@@ -231,6 +232,7 @@ function submissionToRow(record) {
     folder_name: record.folderName,
     drive_folder_id: record.driveFolderId || '',
     drive_folder_url: record.driveFolderUrl || '',
+    drive_provision_state: record.driveProvisionState || 'pending',
     status: record.status || 'New Submission'
   };
 }
@@ -509,6 +511,73 @@ export async function savePost(postRecord) {
   }
 
   return postRecord;
+}
+
+/**
+ * Reads the resumable publish state for one calendar entry.
+ *
+ * Returned to the dispatcher so it can resume a publish that was interrupted -
+ * on Render the container can sleep between creating a media container and
+ * publishing it. See automation/web/publishing/state.js.
+ */
+export async function getPublishState(contentId) {
+  if (supabase) {
+    const { data, error } = await supabase
+      .from('content_calendar')
+      .select('content_id, platforms, platform_statuses, publish_state, retry_count, last_attempt_at, failure_kind')
+      .eq('content_id', contentId)
+      .maybeSingle();
+    if (error) noteFailure('getPublishState', error);
+    else if (data) { noteSuccess(); return data; }
+  }
+
+  const local = loadLocalPosts().find(p => p['Content ID'] === contentId);
+  if (!local) return null;
+  return {
+    content_id: contentId,
+    platforms: local.Platforms || '',
+    platform_statuses: local.platformStatuses || {},
+    publish_state: local.publishState || 'queued',
+    retry_count: local['Retry Count'] || 0,
+    last_attempt_at: local.lastAttemptAt || null,
+    failure_kind: local.failureKind || null
+  };
+}
+
+/**
+ * Persists per-channel publish state. This is the durable half of the
+ * idempotency guarantee: the container id recorded here is what a later pass
+ * checks before publishing, so a crash cannot cause a second post.
+ */
+export async function savePublishState(contentId, platformStates, rollup) {
+  const posts = loadLocalPosts();
+  const target = posts.find(p => p['Content ID'] === contentId);
+  if (target) {
+    target.platformStatuses = platformStates;
+    target.publishState = rollup.publishState;
+    target.Status = rollup.status || target.Status;
+    target.failureKind = rollup.failureKind || null;
+    target.lastAttemptAt = new Date().toISOString();
+    saveLocalPosts(posts);
+  }
+
+  if (supabase) {
+    const { error } = await supabase
+      .from('content_calendar')
+      .update({
+        platform_statuses: platformStates,
+        publish_state: rollup.publishState,
+        status: rollup.status,
+        failure_kind: rollup.failureKind || null,
+        last_attempt_at: new Date().toISOString(),
+        ...(rollup.publishState === 'completed' ? { posted_at: new Date().toISOString() } : {})
+      })
+      .eq('content_id', contentId);
+    if (error) noteFailure('savePublishState', error);
+    else noteSuccess();
+  }
+
+  return platformStates;
 }
 
 /**

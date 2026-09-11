@@ -332,6 +332,104 @@ async function sendToN8n(endpoint, options = {}) {
   throw lastError;
 }
 
+/**
+ * Creates the client's "[RefId] - [ClientFullName]" folder inside the Drive
+ * vault and records the real ids on the submission.
+ *
+ * The Drive credentials live in n8n (the chambers reconnected Google Drive
+ * there), so n8n performs the actual Drive calls; this function is the
+ * retryable wrapper around that. Documents are streamed from the client's
+ * folder on disk, which means a retry works long after the original request
+ * ended - the uploaded bytes are still there.
+ *
+ * Returns true when the record now has a dedicated folder.
+ */
+async function provisionDriveFolder(record) {
+  const refId = record.refId;
+  const clientDir = path.join(UPLOADS_DIR, record.folderName || '');
+
+  const form = new FormData();
+  form.append('refId', refId);
+  form.append('fullName', record.fullName || '');
+  form.append('phone', record.phone || '');
+  form.append('email', record.email || '');
+  form.append('serviceType', record.serviceType || 'draft_new');
+  form.append('folderName', record.folderName || '');
+  form.append('vaultRootId', DRIVE_VAULT_ROOT_ID);
+
+  // Re-read from the client's folder rather than holding buffers: this is what
+  // makes the operation replayable on a later attempt.
+  let attached = 0;
+  if (fs.existsSync(clientDir)) {
+    fs.readdirSync(clientDir).forEach((name) => {
+      const full = path.join(clientDir, name);
+      let stat;
+      try { stat = fs.statSync(full); } catch { return; }
+      if (!stat.isFile()) return;
+      form.append(`document_${attached++}`, fs.createReadStream(full), {
+        filename: name,
+        knownLength: stat.size
+      });
+    });
+  }
+
+  const n8nRes = await sendToN8n('/webhook/will-submission', {
+    method: 'POST',
+    data: form,
+    headers: form.getHeaders(),
+    timeout: 25000
+  });
+
+  if (!n8nRes || !(n8nRes.driveFolderUrl || n8nRes.driveFolderId)) {
+    await db.patchSubmission(refId, { driveProvisionState: 'pending' });
+    return false;
+  }
+
+  console.log(`[Drive] Provisioned folder for ${refId}: ${n8nRes.driveFolderUrl || n8nRes.driveFolderId}`);
+
+  // Must go through db.patchSubmission, not the local-only helpers: this is
+  // the moment the placeholder vault link becomes the client's real folder,
+  // and Supabase has to receive it too.
+  const patch = {
+    previousDriveUrl: DRIVE_VAULT_ROOT_URL,
+    driveProvisionState: 'provisioned'
+  };
+  if (n8nRes.driveFolderUrl) patch.driveFolderUrl = n8nRes.driveFolderUrl;
+  if (n8nRes.driveFolderId) patch.driveFolderId = n8nRes.driveFolderId;
+  if (n8nRes.folderName) patch.driveFolderName = n8nRes.folderName;
+  if (n8nRes.driveFileIds) patch.driveFileIds = n8nRes.driveFileIds;
+
+  await db.patchSubmission(refId, patch);
+  return true;
+}
+
+// Drains the provisioning backlog. Every submission taken while n8n was in
+// standby still has only the placeholder vault link; this retries them all.
+// PROTECTED: it walks the whole client registry.
+app.post('/api/drive/provision-pending', requireAdminAuth, async (req, res) => {
+  try {
+    const all = await db.getSubmissions();
+    const pending = all.filter(r => !hasDedicatedDriveFolder(r));
+
+    const results = { attempted: pending.length, provisioned: 0, stillPending: 0, errors: [] };
+    for (const record of pending) {
+      try {
+        if (await provisionDriveFolder(record)) results.provisioned++;
+        else results.stillPending++;
+      } catch (err) {
+        results.stillPending++;
+        results.errors.push({ refId: record.refId, error: err.message });
+      }
+    }
+
+    console.log(`[Drive] Backlog drain: ${results.provisioned}/${results.attempted} provisioned.`);
+    return res.json({ success: true, ...results });
+  } catch (err) {
+    console.error('[Drive] Backlog drain failed:', err.message);
+    return res.status(500).json({ success: false, message: 'Drive provisioning sweep failed.' });
+  }
+});
+
 // Health check API
 // Reports which persistence backend is actually serving requests. Without this
 // a silent demotion from Supabase to the local cache looks identical to normal
@@ -603,66 +701,24 @@ app.post('/api/will-submission', upload.array('documents', 10), async (req, res)
       folderName: folderName,
       driveFolderName: folderName,
       driveFolderUrl: pendingDriveFolderUrl,
-      documents: docRecords.length > 0 ? docRecords : [
-        {
-          name: 'Confidential_Will_Instructions.pdf',
-          size: '120 KB',
-          folderName: folderName,
-          driveFolderName: folderName,
-          driveUrl: pendingDriveFolderUrl,
-          driveFolderUrl: pendingDriveFolderUrl
-        }
-      ],
+      driveFolderId: '',
+      driveProvisionState: 'pending',
+      // A submission with no uploads has no documents. This used to fabricate a
+      // "Confidential_Will_Instructions.pdf, 120 KB" entry, so the tracker told
+      // the testator a document was held in the vault when none existed.
+      documents: docRecords,
       status: 'New Submission'
     };
 
     // Save to persistent storage (Supabase PostgreSQL + local cache)
     await db.saveSubmission(newRecord);
 
-    // Build form data payload for n8n Webhook (creates dedicated folder in Drive & logs sheet)
-    try {
-      const form = new FormData();
-      form.append('refId', generatedRef);
-      form.append('fullName', fullName);
-      form.append('phone', phone);
-      form.append('email', email || '');
-      form.append('serviceType', serviceType || 'draft_new');
-      files.forEach((file, index) => {
-        const source = file.storedPath || file.path;
-        if (!source || !fs.existsSync(source)) return;
-        form.append(`document_${index}`, fs.createReadStream(source), {
-          filename: file.originalname,
-          contentType: file.mimetype,
-          knownLength: file.size
-        });
-      });
-
-      sendToN8n('/webhook/will-submission', {
-        method: 'POST',
-        data: form,
-        headers: form.getHeaders(),
-        timeout: 25000
-      }).then(async (n8nRes) => {
-        if (n8nRes && (n8nRes.driveFolderUrl || n8nRes.folderName)) {
-          console.log(`[Will Submission] n8n created organized Drive folder for ${generatedRef}: ${n8nRes.driveFolderUrl || n8nRes.folderName}`);
-
-          // Must go through db.patchSubmission, not the local-only helpers:
-          // this is the moment the placeholder vault link is replaced by the
-          // client's real Drive folder, and Supabase has to receive it too.
-          const patch = { previousDriveUrl: pendingDriveFolderUrl };
-          if (n8nRes.driveFolderUrl) patch.driveFolderUrl = n8nRes.driveFolderUrl;
-          if (n8nRes.driveFolderId) patch.driveFolderId = n8nRes.driveFolderId;
-          if (n8nRes.folderName) patch.driveFolderName = n8nRes.folderName;
-          if (n8nRes.driveFileIds) patch.driveFileIds = n8nRes.driveFileIds;
-
-          await db.patchSubmission(generatedRef, patch);
-        }
-      }).catch((n8nErr) => {
-        console.warn('[Will Submission] n8n webhook notification offline:', n8nErr.message);
-      });
-    } catch (dispatchErr) {
-      console.warn('[Will Submission] Background n8n dispatch skipped:', dispatchErr.message);
-    }
+    // Provision the client's Drive folder in the background. Failure here must
+    // never fail the submission - the documents are already safely on disk and
+    // provisioning is retryable (see /api/drive/provision-pending).
+    provisionDriveFolder(newRecord).catch(err =>
+      console.warn(`[Drive] Provisioning deferred for ${generatedRef}:`, err.message)
+    );
 
     return res.status(200).json({
       success: true,
@@ -705,8 +761,24 @@ app.get('/api/will-submissions', requireAdminAuth, async (req, res) => {
 // schedule or privileged drafting instructions.
 const TRACKER_PUBLIC_FIELDS = [
   'refId', 'date', 'fullName', 'city', 'serviceLabel',
-  'status', 'assetTypes', 'folderName', 'driveFolderName', 'driveFolderUrl'
+  'status', 'assetTypes', 'folderName', 'driveFolderName'
 ];
+
+/**
+ * True only when this submission has its OWN Drive subfolder.
+ *
+ * Until n8n creates "[RefId] - [ClientFullName]" and calls back, a record
+ * carries the vault root as a placeholder. The root contains every client's
+ * folder, so handing that link to a testator would expose the whole vault the
+ * moment its sharing is loosened.
+ */
+function hasDedicatedDriveFolder(record) {
+  const id = (record.driveFolderId || '').trim();
+  const url = (record.driveFolderUrl || '').trim();
+  if (!id && !url) return false;
+  if (id && id !== DRIVE_VAULT_ROOT_ID) return true;
+  return Boolean(url) && !url.includes(DRIVE_VAULT_ROOT_ID);
+}
 
 function toTrackerView(record) {
   const view = {};
@@ -716,6 +788,12 @@ function toTrackerView(record) {
   // Document names can themselves be sensitive ("Divorce_Decree.pdf"), so the
   // tracker confirms the count and leaves the detail to the chambers.
   view.documentCount = Array.isArray(record.documents) ? record.documents.length : 0;
+
+  // The client's folder link is released only once it is genuinely theirs.
+  view.driveFolderProvisioned = hasDedicatedDriveFolder(record);
+  if (view.driveFolderProvisioned) {
+    view.driveFolderUrl = record.driveFolderUrl;
+  }
   return view;
 }
 

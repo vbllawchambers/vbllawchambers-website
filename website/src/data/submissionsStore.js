@@ -33,7 +33,11 @@ const TRACKABLE_FIELDS = [
   'assetTypes',
   'folderName',
   'driveFolderName',
+  // Released by the API only once the client has a Drive folder of their own;
+  // the shared vault root is never surfaced to a testator.
+  'driveFolderProvisioned',
   'driveFolderUrl',
+  'documentCount',
   'documents'
 ];
 

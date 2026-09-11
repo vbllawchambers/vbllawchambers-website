@@ -253,13 +253,14 @@ export default function WillSubmission({ onNavigate, currentPath }) {
         specialInstructions: formData.specialInstructions,
         folderName: `${generatedRef} - ${formData.fullName.trim()}`,
         driveFolderName: `${generatedRef} - ${formData.fullName.trim()}`,
-        driveFolderUrl: 'https://drive.google.com/drive/folders/1Q171pLkFgucgHO0bJ1lRWlxC3en-tHZz',
+        // No Drive link here. The client's own locker does not exist until the
+        // chambers provisions it, and the vault root must never be handed out.
+        driveFolderProvisioned: false,
         documents: files.map(f => ({
           name: f.name,
           size: `${(f.size / 1024).toFixed(1)} KB`,
           folderName: `${generatedRef} - ${formData.fullName.trim()}`,
-          driveFolderName: `${generatedRef} - ${formData.fullName.trim()}`,
-          driveUrl: 'https://drive.google.com/drive/folders/1Q171pLkFgucgHO0bJ1lRWlxC3en-tHZz'
+          driveFolderName: `${generatedRef} - ${formData.fullName.trim()}`
         })),
         status: 'New Submission'
       };
@@ -721,21 +722,32 @@ export default function WillSubmission({ onNavigate, currentPath }) {
                         </div>
                       )}
 
-                      {/* Dedicated Client Vault Folder */}
+                      {/* Dedicated Client Vault Folder.
+                          Never links to the vault root: that folder holds every
+                          client's locker, so it is shown as still provisioning
+                          until this submission has a subfolder of its own. */}
                       <div className="mb-4 p-3 bg-amber-50 rounded-xl border border-amber-200/80 flex items-center gap-2.5">
                         <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-800 flex-shrink-0">
                           <Folder className="w-4 h-4" />
                         </div>
                         <div className="min-w-0 flex-1">
                           <span className="text-[10px] font-bold text-amber-800 uppercase tracking-wider block">
-                            Organized Client Vault Folder
+                            {trackedSubmission.driveFolderProvisioned
+                              ? 'Organized Client Vault Folder'
+                              : 'Chambers Vault'}
                           </span>
-                          <span className="text-xs font-semibold text-slate-800 font-mono truncate block">
-                            {trackedSubmission.driveFolderName || trackedSubmission.folderName || `${trackedSubmission.refId} - ${trackedSubmission.fullName}`}
-                          </span>
+                          {trackedSubmission.driveFolderProvisioned ? (
+                            <span className="text-xs font-semibold text-slate-800 font-mono truncate block">
+                              {trackedSubmission.driveFolderName || trackedSubmission.folderName || `${trackedSubmission.refId} - ${trackedSubmission.fullName}`}
+                            </span>
+                          ) : (
+                            <span className="text-xs font-semibold text-slate-700 block">
+                              Document Locker Provisioning in Progress
+                            </span>
+                          )}
                         </div>
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-200/60 text-amber-900 flex-shrink-0">
-                          Encrypted
+                          {trackedSubmission.driveFolderProvisioned ? 'Encrypted' : 'Securing'}
                         </span>
                       </div>
 

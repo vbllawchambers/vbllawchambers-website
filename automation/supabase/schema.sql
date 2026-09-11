@@ -50,8 +50,16 @@ CREATE TABLE IF NOT EXISTS public.will_submissions (
     folder_name          TEXT NOT NULL,                     -- '[RefId] - [ClientFullName]'
     drive_folder_id      TEXT DEFAULT '',                   -- per-client Drive subfolder id
     drive_folder_url     TEXT DEFAULT '',                   -- per-client Drive subfolder url
+    -- 'pending' until the client's own "[RefId] - [Name]" folder exists. While
+    -- pending the record carries the vault ROOT as a placeholder, which is why
+    -- the tracker must not hand driveFolderUrl to the testator - the root holds
+    -- every client's locker.
+    drive_provision_state VARCHAR(32) DEFAULT 'pending',
     status               VARCHAR(64) NOT NULL DEFAULT 'New Submission'
 );
+
+ALTER TABLE public.will_submissions
+    ADD COLUMN IF NOT EXISTS drive_provision_state VARCHAR(32) DEFAULT 'pending';
 
 CREATE INDEX IF NOT EXISTS idx_will_submissions_ref     ON public.will_submissions (ref_id);
 CREATE INDEX IF NOT EXISTS idx_will_submissions_status  ON public.will_submissions (status);
@@ -97,11 +105,30 @@ CREATE TABLE IF NOT EXISTS public.content_calendar (
     retry_count        INT DEFAULT 0,
     posted_at          TIMESTAMPTZ,
     error_log          TEXT DEFAULT '',
-    platform_statuses  JSONB DEFAULT '{}'::jsonb            -- { "youtube": { "id": "...", "state": "posted" } }
+    -- Resumable publish state, one entry per channel:
+    --   { "instagram": { "state": "pending", "containerId": "...",
+    --                    "retryCount": 0, "lastAttemptAt": "...",
+    --                    "failureKind": null, "postId": null } }
+    -- See automation/web/publishing/state.js. Persisting the container id is
+    -- what stops a container that sleeps mid-publish from posting twice.
+    platform_statuses  JSONB DEFAULT '{}'::jsonb,
+    publish_state      VARCHAR(32) DEFAULT 'queued',        -- rollup across channels
+    last_attempt_at    TIMESTAMPTZ,
+    failure_kind       VARCHAR(32)                          -- AUTH_EXPIRED | TRANSIENT_NETWORK | FATAL_PAYLOAD
 );
 
 CREATE INDEX IF NOT EXISTS idx_content_calendar_sched  ON public.content_calendar (scheduled_datetime DESC);
 CREATE INDEX IF NOT EXISTS idx_content_calendar_status ON public.content_calendar (status);
+
+-- Lets the dispatcher find work without scanning the table.
+CREATE INDEX IF NOT EXISTS idx_content_calendar_publish_state
+    ON public.content_calendar (publish_state)
+    WHERE publish_state NOT IN ('completed', 'failed');
+
+-- Idempotent upgrade for projects provisioned before these columns existed.
+ALTER TABLE public.content_calendar ADD COLUMN IF NOT EXISTS publish_state   VARCHAR(32) DEFAULT 'queued';
+ALTER TABLE public.content_calendar ADD COLUMN IF NOT EXISTS last_attempt_at TIMESTAMPTZ;
+ALTER TABLE public.content_calendar ADD COLUMN IF NOT EXISTS failure_kind    VARCHAR(32);
 
 -- ==============================================================================
 -- 4. Row Level Security - DEFAULT DENY

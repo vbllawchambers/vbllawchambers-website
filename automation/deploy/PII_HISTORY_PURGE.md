@@ -45,6 +45,25 @@ happened.
 3. Confirm nothing else depends on the commit SHAs (open PRs, deploy pins,
    Render build hooks pinned to a commit).
 
+## Automated script
+
+[`purge-pii-history.sh`](./purge-pii-history.sh) performs the whole procedure
+below with a safety backup, a pre-push verification gate (it refuses to push if
+the data is still reachable) and two typed confirmations:
+
+```bash
+bash automation/deploy/purge-pii-history.sh
+```
+
+> **On "scrub commits `0e67ec1`, `35ca8e8`, `978def3`":** those commits cannot
+> simply be dropped — they also carry the Drive organisation, tracker and
+> submissions API that the current code is built on. `git-filter-repo` operates
+> on *paths*, so the script removes the offending **files** from every commit
+> that contained them. The work survives, the client data does not, and those
+> SHAs cease to exist anyway because every rewritten commit is re-hashed.
+
+The manual steps below are the same procedure, if you prefer to run it by hand.
+
 ## Procedure
 
 `git-filter-repo` is the supported tool (`git filter-branch` is deprecated and
@@ -76,10 +95,13 @@ git log --all --oneline -- website/src/data/sampleSubmissions.js       # expect 
 git rev-list --all --count                                            # sanity: commits remain
 ```
 
-Also grep the rewritten history for a known client string before pushing:
+Also confirm no client-data object is reachable under any name (this catches
+renames, and unlike grepping for a known client string it does not require
+writing real client details into a tracked file):
 
 ```bash
-git grep -I -n "Musunuru scrutinized" $(git rev-list --all) | head   # expect no output
+git rev-list --objects --all   | grep -E 'submissions\.json|sampleSubmissions\.js|submissions\.backup|automation/web/uploads/'
+# expect no output
 ```
 
 Then force-push to **both** remotes — purging only one leaves the data public:
