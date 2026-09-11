@@ -21,7 +21,7 @@ import {
   FileCheck
 } from 'lucide-react';
 
-const CHAMBERS_PASSCODE = 'vbl2026';
+const CHAMBERS_PASSCODE = (import.meta.env.VITE_CHAMBERS_PASSCODE || 'vbl2026').toLowerCase().trim();
 
 // Realistic sample submissions for demonstration & immediate testing
 const INITIAL_SAMPLE_SUBMISSIONS = [
