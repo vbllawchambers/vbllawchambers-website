@@ -712,3 +712,11 @@ textarea:focus,
 .min-w-0 { min-width: 0px; }
 .text-\[10px\] { font-size: 10px; line-height: 14px; }
 
+
+/* Disabled state for the will-tracker lookup button while a query is in flight. */
+.disabled\:bg-amber-700\/60:disabled { background-color: rgba(180, 83, 9, 0.6); }
+.disabled\:cursor-not-allowed:disabled { cursor: not-allowed; }
+
+/* Undelivered-submission warning on the will confirmation screen. */
+.border-red-300 { border-color: #fca5a5; }
+.text-red-800 { color: #991b1b; }

@@ -7,6 +7,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import fs from 'fs';
+import os from 'os';
+import crypto from 'crypto';
 import * as db from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -124,31 +126,35 @@ function saveSubmissions(list) {
 // Ensure file exists
 loadSubmissions();
 
-// Persistent Content Calendar Posts Storage
-const POSTS_FILE = path.join(DATA_DIR, 'posts.json');
+// The content calendar is read and written exclusively through db.js so that
+// Supabase and the local cache never diverge. The local-only helpers that used
+// to live here are gone; use db.getPosts / db.savePost / db.savePosts.
 
-function loadPosts() {
-  try {
-    if (fs.existsSync(POSTS_FILE)) {
-      const data = fs.readFileSync(POSTS_FILE, 'utf8');
-      const parsed = JSON.parse(data);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
-      }
-    }
-  } catch (err) {
-    console.warn('[Posts Registry] Error reading posts file:', err.message);
+/**
+ * Issues a fresh chambers reference, checking it is not already in use.
+ *
+ * Uses crypto rather than Math.random: references are the only credential a
+ * testator holds for their file, so they must not be predictable from a
+ * previously issued one.
+ */
+async function issueReferenceId() {
+  for (let attempt = 0; attempt < 12; attempt++) {
+    const candidate = 'VBL-' + String(crypto.randomInt(100000, 1000000));
+    const existing = await db.getSubmissionByRef(candidate);
+    if (!existing) return candidate;
   }
-  return [];
+  // Exhausting twelve attempts means the six-digit space is crowded; widen it
+  // rather than risk colliding with a live client file.
+  return 'VBL-' + String(crypto.randomInt(100000, 1000000)) + '-' + crypto.randomBytes(2).toString('hex').toUpperCase();
 }
 
-function savePosts(list) {
-  try {
-    fs.writeFileSync(POSTS_FILE, JSON.stringify(list, null, 2), 'utf8');
-  } catch (err) {
-    console.warn('[Posts Registry] Error writing posts file:', err.message);
-  }
-}
+// Google Drive vault. Heavy binaries (will PDFs, title deeds, pattadar
+// passbooks) live here, never in Supabase - see automation/supabase/schema.sql.
+// n8n creates the per-client "[RefId] - [ClientFullName]" subfolder and calls
+// back with its real id/url; until that returns, a submission carries the vault
+// root as a PENDING placeholder, not as the client's own folder.
+const DRIVE_VAULT_ROOT_ID = process.env.GOOGLE_DRIVE_FOLDER_ID || '1Q171pLkFgucgHO0bJ1lRWlxC3en-tHZz';
+const DRIVE_VAULT_ROOT_URL = `https://drive.google.com/drive/folders/${DRIVE_VAULT_ROOT_ID}`;
 
 // Quiet warning tracker for offline n8n
 let lastN8nOfflineNotice = 0;
@@ -185,6 +191,12 @@ app.use(cors({
   },
   credentials: true
 }));
+
+// Render (and any reverse proxy in deploy/) terminates TLS in front of this
+// process. Without this, req.ip is the proxy's address for every request, so
+// the per-client throttle below would lump all visitors into one bucket and
+// rate-limit the whole practice at once.
+app.set('trust proxy', 1);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -258,11 +270,40 @@ function resolveServiceLabel(serviceType) {
   return 'Unspecified — requires chambers review';
 }
 
-// Configure Multer for in-memory upload buffering (up to 250MB for video)
+// Uploads stream straight to disk.
+//
+// memoryStorage() held every uploaded file whole in RAM. Combined with the
+// 250MB limit and `upload.array('documents', 10)` a single will submission
+// could ask for 2.5GB of heap, which OOM-kills a 512MB Render container long
+// before the request completes. Streaming to disk makes peak memory
+// independent of file size.
+//
+// Staging lives OUTSIDE uploads/, because uploads/ is served statically -
+// staging files inside it would be publicly fetchable mid-request.
+const STAGING_DIR = path.join(os.tmpdir(), 'vbl-upload-staging');
+if (!fs.existsSync(STAGING_DIR)) fs.mkdirSync(STAGING_DIR, { recursive: true });
+
 const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 250 * 1024 * 1024 }
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => cb(null, STAGING_DIR),
+    filename: (req, file, cb) =>
+      cb(null, `${Date.now()}_${Math.random().toString(36).slice(2, 10)}`)
+  }),
+  limits: {
+    fileSize: 250 * 1024 * 1024,
+    files: 10,
+    fields: 40
+  }
 });
+
+// Staged files must not accumulate: the container has a small ephemeral disk
+// and these are confidential client documents.
+function discardStaged(files) {
+  (Array.isArray(files) ? files : [files]).forEach(file => {
+    if (!file || !file.path) return;
+    fs.promises.unlink(file.path).catch(() => {});
+  });
+}
 
 // Helper to make resilient requests to n8n
 async function sendToN8n(endpoint, options = {}) {
@@ -292,6 +333,9 @@ async function sendToN8n(endpoint, options = {}) {
 }
 
 // Health check API
+// Reports which persistence backend is actually serving requests. Without this
+// a silent demotion from Supabase to the local cache looks identical to normal
+// operation, and records quietly stop being durable.
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
@@ -299,6 +343,8 @@ app.get('/api/health', (req, res) => {
     client: 'Advocate in Kavali, AP',
     focus: 'Will Drafting & Legal Presence',
     framework: 'React + Vite + Express',
+    storage: db.getBackendStatus(),
+    driveVaultRootId: DRIVE_VAULT_ROOT_ID,
     timestamp: new Date().toISOString()
   });
 });
@@ -308,10 +354,10 @@ app.get('/api/posts', requireAdminAuth, async (req, res) => {
   try {
     const data = await sendToN8n('/webhook/content-list', { method: 'GET' });
     if (data && data.posts && Array.isArray(data.posts) && data.posts.length > 0) {
-      savePosts(data.posts);
+      await db.savePosts(data.posts);
       return res.json({ success: true, offline: false, ...data });
     }
-    const cachedPosts = loadPosts();
+    const cachedPosts = await db.getPosts();
     return res.json({
       success: true,
       offline: false,
@@ -326,7 +372,9 @@ app.get('/api/posts', requireAdminAuth, async (req, res) => {
       lastN8nOfflineNotice = now;
     }
 
-    const cachedPosts = loadPosts();
+    // n8n being in standby is normal operation, not an error: the calendar is
+    // still served from the hybrid registry, so this must never surface as a 500.
+    const cachedPosts = await db.getPosts();
     return res.json({
       success: true,
       offline: true,
@@ -348,6 +396,10 @@ app.post('/api/upload', requireAdminAuth, upload.single('file'), async (req, res
       });
     }
 
+    // Remove the staged copy however this request ends - success, validation
+    // failure or thrown error.
+    res.on('finish', () => discardStaged(req.file));
+
     const {
       title,
       caption,
@@ -364,11 +416,14 @@ app.post('/api/upload', requireAdminAuth, upload.single('file'), async (req, res
       });
     }
 
-    // Build multipart/form-data payload for n8n Webhook
+    // Build multipart/form-data payload for n8n Webhook.
+    // Streamed from the staged file rather than buffered, so a 200MB video
+    // never has to fit in the container's heap.
     const form = new FormData();
-    form.append('data', req.file.buffer, {
+    form.append('data', fs.createReadStream(req.file.path), {
       filename: req.file.originalname || `upload_${Date.now()}.mp4`,
-      contentType: req.file.mimetype || 'video/mp4'
+      contentType: req.file.mimetype || 'video/mp4',
+      knownLength: req.file.size
     });
     form.append('title', title.trim());
     form.append('caption', caption ? caption.trim() : '');
@@ -388,7 +443,6 @@ app.post('/api/upload', requireAdminAuth, upload.single('file'), async (req, res
       return res.json(result);
     } catch (n8nErr) {
       console.warn('[Upload Media] n8n offline, queuing post in local calendar:', n8nErr.message);
-      const cachedPosts = loadPosts();
       const newPostId = 'W-' + String(Date.now()).slice(-6);
       const newLocalPost = {
         'Content ID': newPostId,
@@ -408,7 +462,7 @@ app.post('/api/upload', requireAdminAuth, upload.single('file'), async (req, res
         'Pinterest Status': pinterestBoardId ? 'Queued' : 'Skipped',
         'Threads Status': 'Queued (n8n Standby)'
       };
-      savePosts([newLocalPost, ...cachedPosts]);
+      await db.savePost(newLocalPost);
       return res.json({
         success: true,
         offline: true,
@@ -447,11 +501,24 @@ app.post('/api/will-submission', upload.array('documents', 10), async (req, res)
       specialInstructions
     } = req.body;
 
+    // Sweep any staged leftovers once the response is done. Files that were
+    // successfully renamed into the client folder are already gone, so this
+    // only catches validation failures and copy-fallback duplicates.
+    res.on('finish', () => discardStaged(req.files));
+
     if (!fullName || !phone) {
       return res.status(400).json({ success: false, message: 'Full name and phone number are required.' });
     }
 
-    const generatedRef = (refId && refId.trim()) ? refId.trim().toUpperCase() : ('VBL-' + Math.floor(100000 + Math.random() * 900000));
+    // The reference is issued by the chambers, never accepted from the caller.
+    // This endpoint is public and db.saveSubmission upserts on refId, so
+    // honouring a submitted refId let anyone overwrite an existing client's
+    // record simply by posting that reference. The client's optimistic guess is
+    // ignored; it adopts the reference returned in this response.
+    if (refId) {
+      console.warn('[Will Submission] Ignoring caller-supplied refId - references are issued server-side.');
+    }
+    const generatedRef = await issueReferenceId();
     const files = req.files || [];
 
     console.log(`[Will Submission] Received application ${generatedRef} for ${fullName} (${phone}) with ${files.length} documents.`);
@@ -478,26 +545,37 @@ app.post('/api/will-submission', upload.array('documents', 10), async (req, res)
       console.warn('[Will Submission] Error creating client directory:', dirErr.message);
     }
 
-    const defaultDriveFolderUrl = 'https://drive.google.com/drive/folders/1Q171pLkFgucgHO0bJ1lRWlxC3en-tHZz';
+    const pendingDriveFolderUrl = DRIVE_VAULT_ROOT_URL;
 
-    // Persist uploaded files into the client's dedicated folder
+    // Move each staged upload into the client's dedicated folder. The bytes are
+    // already on disk (diskStorage), so this is a rename rather than a
+    // buffer-and-write; rename can fail across devices, hence the copy fallback.
     const docRecords = files.map((file, index) => {
       const safeFilename = `${index + 1}_${file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
       const filePath = path.join(clientUploadDir, safeFilename);
       try {
-        fs.writeFileSync(filePath, file.buffer);
-      } catch (writeErr) {
-        console.warn('[Will Submission] Failed to write file to disk:', writeErr.message);
+        fs.renameSync(file.path, filePath);
+      } catch (renameErr) {
+        try {
+          fs.copyFileSync(file.path, filePath);
+        } catch (copyErr) {
+          console.warn('[Will Submission] Failed to store file on disk:', copyErr.message);
+        }
       }
+      // n8n reads from the final location below; record it so the staged path
+      // is never used again.
+      file.storedPath = filePath;
 
       return {
         name: file.originalname,
         size: `${(file.size / 1024).toFixed(1)} KB`,
+        sizeBytes: file.size,
+        mimeType: file.mimetype || 'application/octet-stream',
         url: `/uploads/${encodeURIComponent(folderName)}/${encodeURIComponent(safeFilename)}`,
         folderName: folderName,
         driveFolderName: folderName,
-        driveUrl: defaultDriveFolderUrl,
-        driveFolderUrl: defaultDriveFolderUrl
+        driveUrl: pendingDriveFolderUrl,
+        driveFolderUrl: pendingDriveFolderUrl
       };
     });
 
@@ -524,15 +602,15 @@ app.post('/api/will-submission', upload.array('documents', 10), async (req, res)
       specialInstructions: (specialInstructions || '').trim(),
       folderName: folderName,
       driveFolderName: folderName,
-      driveFolderUrl: defaultDriveFolderUrl,
+      driveFolderUrl: pendingDriveFolderUrl,
       documents: docRecords.length > 0 ? docRecords : [
         {
           name: 'Confidential_Will_Instructions.pdf',
           size: '120 KB',
           folderName: folderName,
           driveFolderName: folderName,
-          driveUrl: defaultDriveFolderUrl,
-          driveFolderUrl: defaultDriveFolderUrl
+          driveUrl: pendingDriveFolderUrl,
+          driveFolderUrl: pendingDriveFolderUrl
         }
       ],
       status: 'New Submission'
@@ -550,9 +628,12 @@ app.post('/api/will-submission', upload.array('documents', 10), async (req, res)
       form.append('email', email || '');
       form.append('serviceType', serviceType || 'draft_new');
       files.forEach((file, index) => {
-        form.append(`document_${index}`, file.buffer, {
+        const source = file.storedPath || file.path;
+        if (!source || !fs.existsSync(source)) return;
+        form.append(`document_${index}`, fs.createReadStream(source), {
           filename: file.originalname,
-          contentType: file.mimetype
+          contentType: file.mimetype,
+          knownLength: file.size
         });
       });
 
@@ -561,23 +642,20 @@ app.post('/api/will-submission', upload.array('documents', 10), async (req, res)
         data: form,
         headers: form.getHeaders(),
         timeout: 25000
-      }).then((n8nRes) => {
+      }).then(async (n8nRes) => {
         if (n8nRes && (n8nRes.driveFolderUrl || n8nRes.folderName)) {
           console.log(`[Will Submission] n8n created organized Drive folder for ${generatedRef}: ${n8nRes.driveFolderUrl || n8nRes.folderName}`);
-          const liveSubs = loadSubmissions();
-          const target = liveSubs.find(s => s.refId === generatedRef);
-          if (target) {
-            if (n8nRes.driveFolderUrl) target.driveFolderUrl = n8nRes.driveFolderUrl;
-            if (n8nRes.driveFolderId) target.driveFolderId = n8nRes.driveFolderId;
-            if (n8nRes.folderName) target.driveFolderName = n8nRes.folderName;
-            if (target.documents) {
-              target.documents.forEach(d => {
-                if (n8nRes.driveFolderUrl) d.driveFolderUrl = n8nRes.driveFolderUrl;
-                if (n8nRes.driveUrl) d.driveUrl = n8nRes.driveUrl;
-              });
-            }
-            saveSubmissions(liveSubs);
-          }
+
+          // Must go through db.patchSubmission, not the local-only helpers:
+          // this is the moment the placeholder vault link is replaced by the
+          // client's real Drive folder, and Supabase has to receive it too.
+          const patch = { previousDriveUrl: pendingDriveFolderUrl };
+          if (n8nRes.driveFolderUrl) patch.driveFolderUrl = n8nRes.driveFolderUrl;
+          if (n8nRes.driveFolderId) patch.driveFolderId = n8nRes.driveFolderId;
+          if (n8nRes.folderName) patch.driveFolderName = n8nRes.folderName;
+          if (n8nRes.driveFileIds) patch.driveFileIds = n8nRes.driveFileIds;
+
+          await db.patchSubmission(generatedRef, patch);
         }
       }).catch((n8nErr) => {
         console.warn('[Will Submission] n8n webhook notification offline:', n8nErr.message);
@@ -591,7 +669,7 @@ app.post('/api/will-submission', upload.array('documents', 10), async (req, res)
       refId: generatedRef,
       folderName: folderName,
       driveFolderName: folderName,
-      driveFolderUrl: defaultDriveFolderUrl,
+      driveFolderUrl: pendingDriveFolderUrl,
       submission: newRecord,
       message: 'Will submission recorded successfully in Chambers Registry.'
     });
@@ -618,21 +696,84 @@ app.get('/api/will-submissions', requireAdminAuth, async (req, res) => {
   }
 });
 
+// Fields a testator may see about their own application.
+//
+// The full record is deliberately NOT returned here. A reference is only six
+// digits, so the whole space is enumerable by anyone; the blast radius of a
+// guessed reference must therefore be "someone learns an application exists
+// and what stage it is at", never the testator's address, executor, asset
+// schedule or privileged drafting instructions.
+const TRACKER_PUBLIC_FIELDS = [
+  'refId', 'date', 'fullName', 'city', 'serviceLabel',
+  'status', 'assetTypes', 'folderName', 'driveFolderName', 'driveFolderUrl'
+];
+
+function toTrackerView(record) {
+  const view = {};
+  TRACKER_PUBLIC_FIELDS.forEach(key => {
+    if (record[key] !== undefined) view[key] = record[key];
+  });
+  // Document names can themselves be sensitive ("Divorce_Decree.pdf"), so the
+  // tracker confirms the count and leaves the detail to the chambers.
+  view.documentCount = Array.isArray(record.documents) ? record.documents.length : 0;
+  return view;
+}
+
+// Fixed-window throttle for the public tracker. Enumerating VBL-###### is
+// otherwise free; this makes a full sweep take days rather than minutes.
+const trackerHits = new Map();
+const TRACKER_WINDOW_MS = 60 * 1000;
+const TRACKER_MAX_PER_WINDOW = 20;
+
+// A dual-stack client reaches localhost as both ::1 and 127.0.0.1, and Node
+// reports IPv4 over IPv6 as ::ffff:127.0.0.1. Normalising keeps one caller in
+// one bucket instead of silently granting them several budgets.
+function clientBucket(req) {
+  const raw = req.ip || req.socket?.remoteAddress || 'unknown';
+  const v4 = raw.replace(/^::ffff:/, '');
+  return v4 === '::1' ? '127.0.0.1' : v4;
+}
+
+function throttleTracker(req, res, next) {
+  const now = Date.now();
+  const ip = clientBucket(req);
+  const entry = trackerHits.get(ip);
+
+  if (!entry || now - entry.start > TRACKER_WINDOW_MS) {
+    trackerHits.set(ip, { start: now, count: 1 });
+  } else if (++entry.count > TRACKER_MAX_PER_WINDOW) {
+    return res.status(429).json({
+      success: false,
+      message: 'Too many lookups. Please wait a minute and try again, or contact our chambers.'
+    });
+  }
+
+  // Bounded cleanup so the map cannot grow without limit on a long-lived
+  // process (this runs in a 512MB container).
+  if (trackerHits.size > 5000) {
+    for (const [key, value] of trackerHits) {
+      if (now - value.start > TRACKER_WINDOW_MS) trackerHits.delete(key);
+    }
+  }
+  next();
+}
+
 // Retrieve single will submission by reference ID
 // Intentionally PUBLIC: clients track their own application by reference ID
-// without an account, so this cannot require the admin key. Access is limited
-// to whoever holds the specific VBL-XXXXXX reference. Do not add auth here
-// without also reworking the client-facing tracker in WillSubmission.jsx.
-app.get('/api/will-submissions/:refId', async (req, res) => {
+// without an account, so this cannot require the admin key. It returns only the
+// tracker projection above - do not widen it to the full record, and do not add
+// auth here without also reworking the client tracker in WillSubmission.jsx.
+app.get('/api/will-submissions/:refId', throttleTracker, async (req, res) => {
   try {
     const { refId } = req.params;
     const match = await db.getSubmissionByRef(refId);
     if (match) {
-      return res.json({ success: true, submission: match });
+      return res.json({ success: true, submission: toTrackerView(match) });
     }
     return res.status(404).json({ success: false, message: `No submission found with ID ${refId}` });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error('[Will Tracker] Lookup failed:', err.message);
+    return res.status(500).json({ success: false, message: 'Registry lookup failed.' });
   }
 });
 

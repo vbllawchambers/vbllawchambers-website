@@ -22,7 +22,18 @@ import {
   MapPin,
   Folder
 } from 'lucide-react';
-import { saveSubmission, getSubmissionByRef } from '../data/sampleSubmissions';
+import { saveSubmission, getSubmissionByRef } from '../data/submissionsStore';
+
+// Must stay in sync with SERVICE_LABELS in automation/web/server.js. The
+// previous ternary chain fell through to 'Family Settlement Deed', so any
+// unrecognised value silently recorded the wrong legal instruction on a
+// client's file; an unknown id is now flagged for manual classification.
+const SERVICE_LABELS = {
+  draft_new: 'Fresh Will Drafting',
+  review_existing: 'Scrutiny of Existing Draft',
+  codicil: 'Codicil (Amendment)',
+  family_settlement: 'Family Settlement Deed'
+};
 
 export default function WillSubmission({ onNavigate, currentPath }) {
   const [currentStep, setCurrentStep] = useState(1);
@@ -30,6 +41,7 @@ export default function WillSubmission({ onNavigate, currentPath }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [referenceId, setReferenceId] = useState('');
+  const [deliveredToChambers, setDeliveredToChambers] = useState(true);
 
   // Client Tracking State
   const [activeTab, setActiveTab] = useState('submit'); // 'submit' | 'track'
@@ -37,9 +49,10 @@ export default function WillSubmission({ onNavigate, currentPath }) {
   const [trackedSubmission, setTrackedSubmission] = useState(null);
   const [trackSearched, setTrackSearched] = useState(false);
   const [trackError, setTrackError] = useState('');
+  const [trackLoading, setTrackLoading] = useState(false);
   const [copiedRef, setCopiedRef] = useState(false);
 
-  // Deep link support: /will-submission?ref=VBL-475868 or ?tab=track
+  // Deep link support: /will-submission?ref=VBL-123456 or ?tab=track
   useEffect(() => {
     try {
       const url = currentPath || window.location.href;
@@ -60,23 +73,37 @@ export default function WillSubmission({ onNavigate, currentPath }) {
     } catch (e) {}
   }, [currentPath]);
 
-  const handleTrackSearch = (refToQuery) => {
+  // Queries the chambers registry over the API. A reference that is not on
+  // file must report exactly that - never an assumed or invented status.
+  const handleTrackSearch = async (refToQuery) => {
     const cleanRef = (refToQuery || trackingRef).trim().toUpperCase();
     if (!cleanRef) {
-      setTrackError('Please enter your reference ID (e.g. VBL-475868)');
+      setTrackError('Please enter your reference ID (e.g. VBL-123456)');
       setTrackedSubmission(null);
       setTrackSearched(true);
       return;
     }
 
     setTrackSearched(true);
-    const result = getSubmissionByRef(cleanRef);
-    if (result) {
-      setTrackedSubmission(result);
-      setTrackError('');
-    } else {
+    setTrackLoading(true);
+    setTrackError('');
+
+    try {
+      const result = await getSubmissionByRef(cleanRef);
+      if (result) {
+        setTrackedSubmission(result);
+        setTrackError('');
+      } else {
+        setTrackedSubmission(null);
+        setTrackError(`No record found matching "${cleanRef}". Please verify your reference number or contact our chambers.`);
+      }
+    } catch (err) {
+      // Reaching the chambers failed. This is not the same as "no such record",
+      // and must not be presented to the testator as one.
       setTrackedSubmission(null);
-      setTrackError(`No record found matching "${cleanRef}". Please verify your reference number or contact our chambers.`);
+      setTrackError('Unable to reach the chambers registry just now. Please check your connection and try again, or contact our office.');
+    } finally {
+      setTrackLoading(false);
     }
   };
 
@@ -220,9 +247,7 @@ export default function WillSubmission({ onNavigate, currentPath }) {
         city: formData.city || 'Kavali',
         address: formData.address,
         serviceType: formData.serviceType,
-        serviceLabel: formData.serviceType === 'draft_new' ? 'Fresh Will Drafting' :
-                      formData.serviceType === 'review_existing' ? 'Scrutiny of Existing Draft' :
-                      formData.serviceType === 'codicil' ? 'Codicil (Amendment)' : 'Family Settlement Deed',
+        serviceLabel: SERVICE_LABELS[formData.serviceType] || 'Unspecified — requires chambers review',
         assetTypes: formData.assetTypes,
         executorName: formData.executorName,
         specialInstructions: formData.specialInstructions,
@@ -240,6 +265,10 @@ export default function WillSubmission({ onNavigate, currentPath }) {
       };
 
       // Dispatch to backend API
+      // Tracks whether the chambers actually received this. A testator must not
+      // be told their will is "securely recorded" when the submission never
+      // left their browser.
+      let acceptedByChambers = false;
       try {
         const response = await fetch('/api/will-submission', {
           method: 'POST',
@@ -248,12 +277,16 @@ export default function WillSubmission({ onNavigate, currentPath }) {
         if (response.ok) {
           const resData = await response.json();
           if (resData.submission) {
+            // The reference is issued by the server; the local guess above is
+            // only a placeholder for the offline case.
             finalSubmissionRecord = resData.submission;
           }
+          acceptedByChambers = true;
         }
       } catch (apiErr) {
         console.warn('Backend API submission deferred:', apiErr);
       }
+      setDeliveredToChambers(acceptedByChambers);
 
       // Save to localStorage so Chambers Portal and Client Tracker immediately have access
       try {
@@ -399,7 +432,7 @@ export default function WillSubmission({ onNavigate, currentPath }) {
                     Track Will Application Status
                   </h2>
                   <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
-                    Enter your Chambers Reference ID (e.g. <span className="font-mono font-semibold text-amber-800">VBL-475868</span>) provided during submission to view real-time advocate scrutiny progress, legal milestones, and scheduled consultations.
+                    Enter your Chambers Reference ID (e.g. <span className="font-mono font-semibold text-amber-800">VBL-123456</span>) provided during submission to view real-time advocate scrutiny progress, legal milestones, and scheduled consultations.
                   </p>
                 </div>
 
@@ -422,43 +455,25 @@ export default function WillSubmission({ onNavigate, currentPath }) {
                           setTrackingRef(e.target.value.toUpperCase());
                           if (trackError) setTrackError('');
                         }}
-                        placeholder="e.g. VBL-475868"
+                        placeholder="e.g. VBL-123456"
                         className="w-full pl-11 pr-4 py-3.5 text-base font-mono uppercase bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 text-slate-900 placeholder:text-slate-400 transition-all"
                       />
                     </div>
                     <button
                       type="submit"
-                      className="bg-amber-700 hover:bg-amber-800 text-white font-semibold px-8 py-3.5 rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2 cursor-pointer"
+                      disabled={trackLoading}
+                      className="bg-amber-700 hover:bg-amber-800 disabled:bg-amber-700/60 disabled:cursor-not-allowed text-white font-semibold px-8 py-3.5 rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2 cursor-pointer"
                     >
                       <Search className="w-4 h-4" />
-                      <span>Track Status</span>
+                      <span>{trackLoading ? 'Checking…' : 'Track Status'}</span>
                     </button>
                   </div>
 
-                  {/* Sample Query Suggestions */}
-                  <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs text-slate-500">
-                    <span>Quick lookup samples:</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setTrackingRef('VBL-475868');
-                        handleTrackSearch('VBL-475868');
-                      }}
-                      className="font-mono bg-slate-100 hover:bg-amber-100 text-slate-700 hover:text-amber-800 px-2.5 py-1 rounded-md border border-slate-200 transition-colors cursor-pointer"
-                    >
-                      VBL-475868
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setTrackingRef('VBL-829104');
-                        handleTrackSearch('VBL-829104');
-                      }}
-                      className="font-mono bg-slate-100 hover:bg-amber-100 text-slate-700 hover:text-amber-800 px-2.5 py-1 rounded-md border border-slate-200 transition-colors cursor-pointer"
-                    >
-                      VBL-829104
-                    </button>
-                  </div>
+                  {/* There were "quick lookup sample" buttons here listing real
+                      reference IDs. On a public page that is a one-click
+                      disclosure of those clients' records, so they are gone.
+                      A testator reaches their file with the reference issued to
+                      them on submission. */}
 
                   {trackError && (
                     <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 flex items-start gap-2.5">
@@ -728,6 +743,11 @@ export default function WillSubmission({ onNavigate, currentPath }) {
                         <span className="text-xs text-slate-500 block mb-2 font-medium">
                           Encrypted Documents in Chambers Vault:
                         </span>
+                        {/* The registry reports how many documents are held, not
+                            their file names - a name such as "Divorce_Decree.pdf"
+                            discloses the matter itself, and a reference number is
+                            only six digits. Names are shown only for a submission
+                            made from this same browser. */}
                         {trackedSubmission.documents && trackedSubmission.documents.length > 0 ? (
                           <div className="space-y-2">
                             {trackedSubmission.documents.map((doc, idx) => (
@@ -742,6 +762,14 @@ export default function WillSubmission({ onNavigate, currentPath }) {
                                 <span className="text-slate-500 flex-shrink-0">{doc.size}</span>
                               </div>
                             ))}
+                          </div>
+                        ) : trackedSubmission.documentCount > 0 ? (
+                          <div className="flex items-center gap-2 p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs">
+                            <Lock className="w-3.5 h-3.5 text-amber-700 flex-shrink-0" />
+                            <span className="text-slate-800">
+                              {trackedSubmission.documentCount}{' '}
+                              {trackedSubmission.documentCount === 1 ? 'document' : 'documents'} held securely in the chambers vault.
+                            </span>
                           </div>
                         ) : (
                           <div className="text-xs text-slate-500 italic p-3 bg-slate-50 rounded-lg border border-slate-200">
@@ -837,11 +865,39 @@ export default function WillSubmission({ onNavigate, currentPath }) {
                   <CheckCircle className="w-10 h-10 text-green-600" />
                 </div>
                 <h2 className="text-3xl font-bold text-slate-900 mb-3">
-                  Will Submission Successfully Received
+                  {deliveredToChambers
+                    ? 'Will Submission Successfully Received'
+                    : 'Submission Saved — Not Yet Delivered'}
                 </h2>
                 <p className="text-slate-600 max-w-xl mx-auto mb-6 text-base leading-relaxed">
-                  Thank you, <strong className="text-slate-900">{formData.fullName}</strong>. Your confidential testamentary details and uploaded documents have been securely recorded.
+                  {deliveredToChambers ? (
+                    <>Thank you, <strong className="text-slate-900">{formData.fullName}</strong>. Your confidential testamentary details and uploaded documents have been securely recorded.</>
+                  ) : (
+                    <>Thank you, <strong className="text-slate-900">{formData.fullName}</strong>. Your details are saved on this device, but we could not reach the chambers registry just now.</>
+                  )}
                 </p>
+
+                {/* The chambers never received this submission. Saying nothing
+                    here would leave a testator believing their will is with
+                    their advocate when it is not. */}
+                {!deliveredToChambers && (
+                  <div className="max-w-lg mx-auto bg-red-50 border border-red-300 rounded-xl p-5 text-left text-sm text-slate-800 mb-6">
+                    <div className="font-bold text-red-800 flex items-center gap-2 mb-2">
+                      <AlertCircle className="w-4 h-4" />
+                      <span>Please confirm with our office</span>
+                    </div>
+                    <p className="mb-2">
+                      This reference has not yet been registered with the chambers, so it will not be found by the tracker. Your documents have not been transmitted.
+                    </p>
+                    <p>
+                      Please call{' '}
+                      <a href="tel:+919849202517" className="font-semibold text-amber-800">
+                        +91 98492 02517
+                      </a>{' '}
+                      to complete your submission, or try again once your connection is restored.
+                    </p>
+                  </div>
+                )}
 
                 <div className="inline-block bg-slate-100 border border-slate-300 rounded-xl px-6 py-3 mb-6">
                   <span className="text-xs uppercase tracking-wider text-slate-500 font-semibold block">

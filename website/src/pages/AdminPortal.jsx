@@ -22,7 +22,6 @@ import {
   FileCheck
 } from 'lucide-react';
 
-import { INITIAL_SAMPLE_SUBMISSIONS, getStoredSubmissions } from '../data/sampleSubmissions';
 
 // NOTE: the passcode is validated server-side by POST /api/auth/login. Any
 // value compiled into this bundle is public (Vite inlines import.meta.env at
@@ -51,25 +50,29 @@ export default function AdminPortal({ onNavigate }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSubmission, setSelectedSubmission] = useState(null);
 
-  // Load submissions from local storage + API + sample data.
+  // The chambers registry is the only source of truth here - there is no
+  // bundled sample data to fall back on, so nothing is shown until the
+  // authenticated API call returns.
   // Re-runs on authentication because the API call needs the token issued at login.
   useEffect(() => {
-    const loaded = getStoredSubmissions();
-    setSubmissions(loaded);
-    setSelectedSubmission((prev) => prev || loaded[0] || null);
+    if (!isAuthenticated) {
+      setSubmissions([]);
+      setSelectedSubmission(null);
+      return;
+    }
 
-    if (!isAuthenticated) return;
-
-    // Fetch live records if the chambers API is active and we hold a token
     fetch('/api/will-submissions', { headers: adminAuthHeaders() })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data && Array.isArray(data.submissions)) {
           setSubmissions(data.submissions);
+          setSelectedSubmission((prev) => prev || data.submissions[0] || null);
         }
       })
       .catch(() => {
-        // Backend offline; sample & local data active
+        // Registry unreachable. Leave the list empty rather than showing
+        // placeholder records that could be mistaken for real client files.
+        setAuthMessage('Unable to reach the chambers registry. No records are shown.');
       });
   }, [isAuthenticated]);
 
