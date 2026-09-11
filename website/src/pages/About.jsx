@@ -96,38 +96,6 @@ export default function About() {
           </div>
         </div>
       </section>
-
-      {/* Awards & Recognition */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl mb-4 font-bold text-slate-900">Awards & Recognition</h2>
-            <p className="text-lg text-slate-600">
-              Our commitment to excellence has been recognized by leading legal organizations and client communities.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="border border-slate-200 p-6 rounded-lg text-center shadow-sm">
-              <div className="text-amber-700 text-3xl mb-2">★★★★★</div>
-              <h3 className="text-xl mb-2 font-semibold text-slate-900">Top Rated Law Firm</h3>
-              <p className="text-slate-600 text-sm">Legal Excellence Awards</p>
-            </div>
-
-            <div className="border border-slate-200 p-6 rounded-lg text-center shadow-sm">
-              <div className="text-amber-700 text-3xl mb-2">🏆</div>
-              <h3 className="text-xl mb-2 font-semibold text-slate-900">Distinguished Legal Practice</h3>
-              <p className="text-slate-600 text-sm">Regional Bar Association</p>
-            </div>
-
-            <div className="border border-slate-200 p-6 rounded-lg text-center shadow-sm">
-              <div className="text-amber-700 text-3xl mb-2">⚖️</div>
-              <h3 className="text-xl mb-2 font-semibold text-slate-900">Outstanding Client Service</h3>
-              <p className="text-slate-600 text-sm">Legal Excellence & Notary Practice</p>
-            </div>
-          </div>
-        </div>
-      </section>
     </div>
   );
 }

@@ -1,102 +1,126 @@
 import React from 'react';
-import { Briefcase, Heart, Home as HomeIcon, FileText, Shield, Scale, Activity, FileCheck } from 'lucide-react';
+import { Briefcase, Heart, Home as HomeIcon, FileText, Scale, FileCheck, Building2, FileSignature, ShieldCheck, ScrollText } from 'lucide-react';
 
 export default function PracticeAreas({ onNavigate }) {
   const practiceAreas = [
     {
-      icon: Briefcase,
-      title: 'Corporate Law',
-      description: 'Comprehensive legal services for businesses including formation, contracts, commercial agreements, and corporate compliance.',
+      icon: FileCheck,
+      title: 'Legal Clearance of Property Documents',
+      description: 'Comprehensive 30-year title verification, link document scrutiny, revenue verification, and official legal clearance reports for property buyers and investors.',
       services: [
-        'Business Formation & Structuring',
-        'Contract Drafting & Negotiation',
-        'Commercial Agreements & Partnerships',
-        'Corporate Governance',
-        'Compliance & Regulatory Matters',
+        '30-Year Title Search & Chain Link Verification',
+        'Encumbrance Certificate (EC) In-Depth Scrutiny',
+        'Revenue Records Verification (1-B Namuna, Adangal & Pattadar)',
+        'Sub-Registrar Office Record Verification & Scrutiny',
+        'Legal Clearance Reports for Bank Loans & Property Purchases',
       ],
     },
     {
-      icon: Heart,
-      title: 'Family Law',
-      description: 'Compassionate and resolute legal guidance through sensitive family matters with a focus on protecting your interests.',
+      icon: FileSignature,
+      title: 'General Power of Attorney (GPA)',
+      description: 'Preparation, notarization, and registration of General and Special Power of Attorney instruments for property management, transactions, and representation.',
       services: [
-        'Divorce & Separation Proceedings',
-        'Child Custody & Maintenance Support',
-        'Alimony & Spousal Support',
-        'Family Property Settlement',
-        'Prenuptial & Family Agreements',
+        'General Power of Attorney (GPA) Drafting & Execution',
+        'Special Power of Attorney (SPA) for Specific Property / Court Acts',
+        'NRI Power of Attorney Attestation & Authentication',
+        'GPA Revocation, Cancellation Deeds & Public Notices',
+        'Sub-Registrar Office Registration & Record Authentication',
+      ],
+    },
+    {
+      icon: Building2,
+      title: 'Development Agreements',
+      description: 'Strategic legal drafting and negotiation for joint development agreements (JDA), landowner-builder partnerships, and real estate project documentation.',
+      services: [
+        'Joint Development Agreements (JDA) Drafting & Vetting',
+        'Landowner & Builder Revenue / Area Sharing Contracts',
+        'Layout Approvals & Regulatory Compliance Advisory',
+        'Construction Handover & Milestone Verification Clauses',
+        'Breach Remedies, Penalty Clauses & Dispute Resolution',
+      ],
+    },
+    {
+      icon: ScrollText,
+      title: 'Terms and Services',
+      description: 'Drafting and vetting of commercial terms of service, master service agreements, and operational legal documentation for businesses and service providers.',
+      services: [
+        'Commercial Terms of Service (ToS) & User Policies',
+        'Master Service Agreements (MSA) & Client Contracts',
+        'Vendor & Supplier Service Level Agreements (SLA)',
+        'Non-Disclosure & Confidentiality Agreements (NDA)',
+        'Limitation of Liability & Indemnity Provision Drafting',
       ],
     },
     {
       icon: HomeIcon,
       title: 'Real Estate & Property Law',
-      description: 'Complete real estate legal counsel for residential, agricultural, and commercial property transactions in Kavali & Nellore.',
+      description: 'Complete real estate legal counsel for residential, agricultural, and commercial property transactions in Kavali, Nellore, and surrounding regions.',
       services: [
-        'Property Title Search & Examination',
-        'Sale Deed Drafting & Registration',
-        'Lease & Tenancy Agreements',
-        'Land Revenue & Zoning Verification',
-        'Property & Boundary Disputes',
+        'Sale Deed Drafting & Registration Assistance',
+        'Gift Deeds, Settlement Deeds & Release Deeds',
+        'Commercial & Residential Lease Agreements',
+        'Agricultural Land & Layout Conversion Guidance',
+        'Property & Boundary Dispute Advisory',
       ],
     },
     {
       icon: FileText,
       title: 'Estate Planning & Will Drafting',
-      description: 'Comprehensive estate planning services to protect your assets and ensure your family succession wishes are honored.',
+      description: 'Comprehensive estate planning services to safeguard your legacy and ensure your testamentary succession intentions are legally unimpeachable.',
       services: [
-        'Will Drafting & Testamentary Deeds',
-        'Power of Attorney (General & Special)',
-        'Trust Creation & Settlement Deeds',
-        'Probate & Estate Administration',
-        'Asset Protection & Succession Planning',
+        'Will Drafting & Codicil Preparation',
+        'Testamentary Trust Deeds & Family Settlements',
+        'Probate & Succession Certificate Assistance',
+        'Legal Heir Succession Advisory',
+        'Asset Protection & Estate Administration',
       ],
     },
     {
-      icon: Shield,
-      title: 'Criminal Defense',
-      description: 'Aggressive defense for clients facing criminal charges before magistrate, sessions, and appellate courts.',
+      icon: Heart,
+      title: 'Family Law',
+      description: 'Compassionate and resolute legal guidance through family matters, property settlements, and matrimonial dispute resolution.',
       services: [
-        'Bail & Anticipatory Bail Petitions',
-        'Cheque Bounce (Sec 138 NI Act)',
-        'White Collar Offenses',
-        'Trial Advocacy & Cross-Examination',
-        'Criminal Appeals & Revisions',
+        'Amicable Family Property Settlement Deeds',
+        'Mutual Consent Divorce & Separation Proceedings',
+        'Child Custody & Maintenance Agreements',
+        'Spousal Support & Alimony Legal Guidance',
+        'Family Mediation & Dispute Counseling',
       ],
     },
     {
       icon: Scale,
       title: 'Civil & Commercial Litigation',
-      description: 'Strategic court representation in complex civil disputes, money recovery, and contractual litigation.',
+      description: 'Strategic court representation in civil disputes, injunction proceedings, money recovery, and contractual enforcement.',
       services: [
-        'Money Recovery Suits',
-        'Injunctions & Specific Performance',
-        'Partition Suits',
-        'Execution Proceedings',
-        'Appeals & Writ Petitions',
+        'Money Recovery Suits & Summary Suits',
+        'Injunctions & Specific Performance of Contracts',
+        'Partition Suits & Declaration of Title',
+        'Execution Petitions & Decree Enforcement',
+        'Civil Appeals & Revisions',
       ],
     },
     {
-      icon: Activity,
-      title: 'Personal Injury & Motor Accidents',
-      description: 'Fighting for rightful compensation for victims of motor accidents, negligence, and liability claims.',
-      services: [
-        'Motor Accident Claims Tribunal (MACT)',
-        'Accident Compensation Claims',
-        'Insurance Claim Settlement',
-        'Negligence & Liability Representation',
-        'Tribunal Appeals',
-      ],
-    },
-    {
-      icon: FileCheck,
+      icon: ShieldCheck,
       title: 'Notary & Legal Documentation',
-      description: 'Official notary public and documentation services by authorized advocate & notary.',
+      description: 'Official notary public services and statutory document execution by Smt. V. Bhagya Lakshmi, authorized Advocate & Notary.',
       services: [
-        'Affidavit Attestation & Verification',
-        'Certified True Copies & Notarization',
-        'Sworn Declarations & Undertakings',
-        'Agreement Drafting & Execution',
-        'Legal Opinion & Verification Reports',
+        'Affidavit Attestation & Sworn Declarations',
+        'Certified True Copies & Official Notarization',
+        'Indemnity Bonds & Legal Undertakings',
+        'Attestation of Documents for Official Submissions',
+        'Notary Register Entries & Verification Seals',
+      ],
+    },
+    {
+      icon: Briefcase,
+      title: 'Corporate Law',
+      description: 'Comprehensive legal advisory for enterprises, commercial partnerships, corporate compliance, and commercial agreements.',
+      services: [
+        'Business Formation & Legal Structuring',
+        'Partnership Deeds & LLP Agreements',
+        'Commercial Contract Drafting & Review',
+        'Corporate Compliance & Regulatory Advisory',
+        'Commercial Dispute Negotiation',
       ],
     },
   ];
@@ -112,7 +136,7 @@ export default function PracticeAreas({ onNavigate }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-5xl mb-4 font-bold tracking-tight">Practice Areas</h1>
           <p className="text-xl text-slate-300 max-w-3xl leading-relaxed">
-            We offer comprehensive legal services across multiple practice areas to meet all your legal needs.
+            We offer comprehensive legal services across civil documentation, property title clearance, development agreements, and testamentary planning.
           </p>
         </div>
       </section>

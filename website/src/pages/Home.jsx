@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, Shield, Heart, Award, Home as HomeIcon, MapPin } from 'lucide-react';
+import { ArrowRight, FileCheck, FileSignature, Building2, FileText, MapPin } from 'lucide-react';
 
 export default function Home({ onNavigate }) {
   const stats = [
@@ -11,24 +11,24 @@ export default function Home({ onNavigate }) {
 
   const featuredPracticeAreas = [
     {
-      icon: Heart,
-      title: 'Family Law',
-      description: 'Compassionate guidance through divorce, custody, and family matters.',
+      icon: FileCheck,
+      title: 'Property Title Clearance',
+      description: '30-year title verification, link document scrutiny, and comprehensive legal clearance reports.',
     },
     {
-      icon: Award,
-      title: 'Corporate Law',
-      description: 'Strategic legal counsel for businesses of all sizes.',
+      icon: FileSignature,
+      title: 'General Power of Attorney',
+      description: 'Preparation, notarization, and registration of GPA and SPA instruments for property management.',
     },
     {
-      icon: HomeIcon,
-      title: 'Real Estate',
-      description: 'Complete real estate legal services for residential and commercial property transactions.',
+      icon: Building2,
+      title: 'Development Agreements',
+      description: 'Joint development agreements (JDA), builder collaboration contracts, and revenue sharing frameworks.',
     },
     {
-      icon: Shield,
-      title: 'Criminal Defense',
-      description: 'Expert defense for criminal charges with a proven track record of success.',
+      icon: FileText,
+      title: 'Estate & Will Drafting',
+      description: 'Complete testamentary planning, online will submission scrutiny, and succession advice.',
     },
   ];
 
@@ -79,12 +79,12 @@ export default function Home({ onNavigate }) {
         </div>
       </section>
 
-      {/* Stats Bar */}
-      <section className="bg-amber-700 py-12">
+      {/* Stats Section */}
+      <section className="bg-amber-700 text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {stats.map((stat, idx) => (
-              <div key={idx} className="text-center text-white">
+              <div key={idx}>
                 <div className="text-4xl md:text-5xl font-bold mb-2">{stat.number}</div>
                 <div className="text-sm md:text-base text-amber-100 font-medium">{stat.label}</div>
               </div>
@@ -147,34 +147,34 @@ export default function Home({ onNavigate }) {
               </h2>
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-xl mb-2 text-amber-800 font-semibold">Experienced Professionals</h3>
+                  <h3 className="text-xl font-semibold mb-2 text-slate-900">
+                    Proven Track Record
+                  </h3>
                   <p className="text-slate-600">
-                    Our team of attorneys brings decades of combined experience across multiple practice areas.
+                    Over 25 years of successful outcomes for our clients across various legal disciplines.
                   </p>
                 </div>
                 <div>
-                  <h3 className="text-xl mb-2 text-amber-800 font-semibold">Client-Focused Approach</h3>
+                  <h3 className="text-xl font-semibold mb-2 text-slate-900">
+                    Client-Centered Approach
+                  </h3>
                   <p className="text-slate-600">
-                    We prioritize your needs and work tirelessly to achieve the best possible outcome for your case.
+                    We listen to your needs and tailor our strategies to achieve your specific goals.
                   </p>
                 </div>
                 <div>
-                  <h3 className="text-xl mb-2 text-amber-800 font-semibold">Proven Track Record</h3>
+                  <h3 className="text-xl font-semibold mb-2 text-slate-900">
+                    Dedicated Legal Team
+                  </h3>
                   <p className="text-slate-600">
-                    With hundreds of successful cases, we have established ourselves as leaders in the legal field.
-                  </p>
-                </div>
-                <div>
-                  <h3 className="text-xl mb-2 text-amber-800 font-semibold">Personalized Service</h3>
-                  <p className="text-slate-600">
-                    Every case is unique, and we tailor our approach to meet your specific circumstances and goals.
+                    Our experienced attorneys are committed to providing the highest quality representation.
                   </p>
                 </div>
               </div>
               <a
                 href="/about"
                 onClick={(e) => { e.preventDefault(); handleNavigate('/about'); }}
-                className="inline-flex items-center mt-8 bg-slate-900 text-white hover:bg-slate-800 px-8 py-3 rounded text-base font-medium transition-colors"
+                className="inline-flex items-center mt-8 text-amber-700 hover:text-amber-800 font-semibold"
               >
                 Learn More About Us
                 <ArrowRight className="ml-2 w-4 h-4" />

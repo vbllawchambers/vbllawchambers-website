@@ -19,7 +19,7 @@ const ROUTES = [
     path: '/practice-areas',
     file: 'practice-areas.html',
     title: 'Legal Practice Areas | VBL Law Chambers | Kavali, Nellore',
-    description: 'Comprehensive legal services in Civil, Criminal, Family Law, Will Drafting, Property Verification, Motor Accident Claims (MACT), and Notary Attestations.',
+    description: 'Comprehensive legal services in Legal Clearance of Property Documents, General Power of Attorney (GPA), Development Agreements, Will Drafting, Terms & Services, and Notary Documentation.',
   },
   {
     path: '/attorneys',

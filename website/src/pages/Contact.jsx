@@ -186,14 +186,16 @@ export default function Contact({ onNavigate }) {
                           required
                         >
                           <option value="">Select a practice area</option>
-                          <option value="corporate">Corporate Law</option>
-                          <option value="criminal">Criminal Defense</option>
-                          <option value="family">Family Law</option>
-                          <option value="real-estate">Real Estate & Property Law</option>
+                          <option value="property-clearance">Legal Clearance of Property Documents</option>
+                          <option value="gpa">General Power of Attorney (GPA)</option>
+                          <option value="development-agreements">Development Agreements</option>
+                          <option value="terms-and-services">Terms and Services</option>
                           <option value="estate-planning">Estate Planning & Will Drafting</option>
-                          <option value="notary">Notary & Legal Documentation</option>
+                          <option value="real-estate">Real Estate & Property Law</option>
+                          <option value="family">Family Law</option>
                           <option value="civil">Civil & Commercial Litigation</option>
-                          <option value="motor-accidents">Personal Injury & MACT Claims</option>
+                          <option value="notary">Notary & Legal Documentation</option>
+                          <option value="corporate">Corporate Law</option>
                           <option value="other">Other Legal Enquiry</option>
                         </select>
                       </div>

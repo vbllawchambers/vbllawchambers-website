@@ -192,7 +192,7 @@ export default function Footer({ onNavigate }) {
                   onClick={(e) => handleNavClick(e, '/practice-areas')}
                   className="hover:text-amber-500 transition-colors"
                 >
-                  Real Estate
+                  Property Title Clearance
                 </a>
               </li>
               <li>
@@ -201,7 +201,7 @@ export default function Footer({ onNavigate }) {
                   onClick={(e) => handleNavClick(e, '/practice-areas')}
                   className="hover:text-amber-500 transition-colors"
                 >
-                  Personal Injury
+                  General Power of Attorney (GPA)
                 </a>
               </li>
               <li>
@@ -210,7 +210,25 @@ export default function Footer({ onNavigate }) {
                   onClick={(e) => handleNavClick(e, '/practice-areas')}
                   className="hover:text-amber-500 transition-colors"
                 >
-                  Criminal Defense
+                  Development Agreements
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/practice-areas"
+                  onClick={(e) => handleNavClick(e, '/practice-areas')}
+                  className="hover:text-amber-500 transition-colors"
+                >
+                  Real Estate & Property Law
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/practice-areas"
+                  onClick={(e) => handleNavClick(e, '/practice-areas')}
+                  className="hover:text-amber-500 transition-colors"
+                >
+                  Terms and Services
                 </a>
               </li>
             </ul>
