@@ -14,6 +14,7 @@ import {
   AlertCircle,
   Eye,
   LogOut,
+  Folder,
   FolderOpen,
   Calendar,
   User,
@@ -467,6 +468,32 @@ export default function AdminPortal({ onNavigate }) {
 
                 {/* Uploaded Documents & Google Drive Links */}
                 <div className="pt-4 border-t border-slate-200">
+                  {/* Dedicated Organized Drive Folder Card */}
+                  <div className="mb-4 p-3.5 bg-amber-50/70 rounded-xl border border-amber-200 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-800 flex-shrink-0">
+                        <Folder className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="text-[10px] font-bold text-amber-800 uppercase tracking-wider block">
+                          Organized Google Drive Folder
+                        </span>
+                        <span className="text-xs font-semibold text-slate-800 truncate block font-mono">
+                          {selectedSubmission.driveFolderName || selectedSubmission.folderName || `${selectedSubmission.refId} - ${selectedSubmission.fullName}`}
+                        </span>
+                      </div>
+                    </div>
+                    <a
+                      href={selectedSubmission.driveFolderUrl || 'https://drive.google.com/drive/folders/1Q171pLkFgucgHO0bJ1lRWlxC3en-tHZz'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-700 hover:bg-amber-800 text-white text-xs font-semibold transition-colors shadow-sm flex-shrink-0"
+                    >
+                      <span>Open Folder</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
+
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
                       <FileCheck className="w-4 h-4 text-amber-700" />
@@ -476,10 +503,10 @@ export default function AdminPortal({ onNavigate }) {
                       href="https://drive.google.com/drive/folders/1Q171pLkFgucgHO0bJ1lRWlxC3en-tHZz"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-xs font-semibold text-amber-700 hover:text-amber-800 inline-flex items-center gap-1"
+                      className="text-xs font-semibold text-slate-500 hover:text-slate-700 inline-flex items-center gap-1"
                     >
-                      <span>Open Chambers Drive Folder</span>
-                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span>All Drive Vault</span>
+                      <ExternalLink className="w-3 h-3" />
                     </a>
                   </div>
 

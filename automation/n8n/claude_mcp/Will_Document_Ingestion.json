@@ -23,16 +23,16 @@
     },
     {
       "parameters": {
-        "operation": "upload",
-        "fileContent": "data",
-        "name": "={{ ($json.body.refId || 'Will_Submission') + '_' + ($binary.document_0 ? $binary.document_0.fileName : 'Document.pdf') }}",
+        "resource": "folder",
+        "operation": "create",
+        "name": "={{ ($json.body.refId || 'VBL-Submission') + ' - ' + ($json.body.fullName || 'Confidential Client') }}",
         "parents": [
           "1Q171pLkFgucgHO0bJ1lRWlxC3en-tHZz"
         ],
         "options": {}
       },
-      "id": "upload-will-to-drive",
-      "name": "Upload Will Document to Google Drive",
+      "id": "create-client-folder-in-drive",
+      "name": "Create Client Submission Folder in Google Drive",
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
       "position": [
@@ -48,21 +48,46 @@
     },
     {
       "parameters": {
-        "jsCode": "const body = $('Will Submission Webhook').item.json.body || $('Will Submission Webhook').item.json;\nconst driveFile = $('Upload Will Document to Google Drive').item.json;\n\nconst now = new Date();\nconst dateStr = now.toISOString();\n\nconst refId = body.refId || ('VBL-' + Math.floor(100000 + Math.random() * 900000));\nconst fullName = body.fullName || 'Anonymous Client';\nconst phone = body.phone || '';\nconst email = body.email || '';\nconst serviceType = body.serviceType || 'draft_new';\nconst city = body.city || 'Kavali';\nconst driveUrl = driveFile.webViewLink || ('https://drive.google.com/file/d/' + driveFile.id + '/view');\n\nreturn [{\n  json: {\n    refId,\n    fullName,\n    phone,\n    email,\n    serviceType,\n    city,\n    dateStr,\n    driveUrl,\n    status: 'New Submission',\n    alertSubject: '⚖️ New Will Submission: ' + fullName + ' (' + refId + ')',\n    alertBody: 'A new confidential will drafting submission has been received.\\n\\n' +\n      'Client: ' + fullName + '\\n' +\n      'Phone: ' + phone + '\\n' +\n      'Email: ' + email + '\\n' +\n      'City: ' + city + '\\n' +\n      'Service: ' + serviceType + '\\n' +\n      'Google Drive Document: ' + driveUrl + '\\n\\n' +\n      'Chambers Portal: https://vbllawchambers.com/chambers-portal'\n  }\n}];"
+        "operation": "upload",
+        "fileContent": "data",
+        "name": "={{ ($('Will Submission Webhook').item.json.body.refId || 'Will_Submission') + '_' + ($binary.document_0 ? $binary.document_0.fileName : 'Document.pdf') }}",
+        "parents": [
+          "={{ $('Create Client Submission Folder in Google Drive').item.json.id }}"
+        ],
+        "options": {}
+      },
+      "id": "upload-will-to-drive",
+      "name": "Upload Will Document to Google Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -420,
+        300
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "mnlFtfGT4KhdV6hA",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $('Will Submission Webhook').item.json.body || $('Will Submission Webhook').item.json;\nconst driveFolder = $('Create Client Submission Folder in Google Drive').item.json;\nconst driveFile = $('Upload Will Document to Google Drive').item.json;\n\nconst now = new Date();\nconst dateStr = now.toISOString();\n\nconst refId = body.refId || ('VBL-' + Math.floor(100000 + Math.random() * 900000));\nconst fullName = body.fullName || 'Anonymous Client';\nconst phone = body.phone || '';\nconst email = body.email || '';\nconst serviceType = body.serviceType || 'draft_new';\nconst city = body.city || 'Kavali';\n\nconst driveFolderId = driveFolder.id;\nconst driveFolderName = driveFolder.name || (refId + ' - ' + fullName);\nconst driveFolderUrl = driveFolder.webViewLink || ('https://drive.google.com/drive/folders/' + driveFolderId);\nconst driveUrl = driveFile.webViewLink || ('https://drive.google.com/file/d/' + driveFile.id + '/view');\n\nreturn [{\n  json: {\n    refId,\n    fullName,\n    phone,\n    email,\n    serviceType,\n    city,\n    dateStr,\n    driveFolderId,\n    driveFolderName,\n    driveFolderUrl,\n    driveUrl,\n    status: 'New Submission',\n    alertSubject: '⚖️ New Will Submission: ' + fullName + ' (' + refId + ')',\n    alertBody: 'A new confidential will drafting submission has been received and organized in Google Drive.\\n\\n' +\n      'Client: ' + fullName + '\\n' +\n      'Phone: ' + phone + '\\n' +\n      'Email: ' + email + '\\n' +\n      'City: ' + city + '\\n' +\n      'Service: ' + serviceType + '\\n' +\n      'Google Drive Client Folder: ' + driveFolderUrl + '\\n' +\n      'Google Drive Document: ' + driveUrl + '\\n\\n' +\n      'Chambers Portal: https://vbllawchambers.com/chambers-portal'\n  }\n}];"
       },
       "id": "format-submission-data",
       "name": "Format Submission Record",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -420,
+        -180,
         300
       ]
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={\n  \"success\": true,\n  \"refId\": \"{{ $json.refId }}\",\n  \"driveUrl\": \"{{ $json.driveUrl }}\",\n  \"message\": \"Document received and stored in Google Drive successfully.\"\n}",
+        "responseBody": "={\n  \"success\": true,\n  \"refId\": \"{{ $json.refId }}\",\n  \"folderName\": \"{{ $json.driveFolderName }}\",\n  \"driveFolderId\": \"{{ $json.driveFolderId }}\",\n  \"driveFolderUrl\": \"{{ $json.driveFolderUrl }}\",\n  \"driveUrl\": \"{{ $json.driveUrl }}\",\n  \"message\": \"Dedicated client folder created and documents organized in Google Drive successfully.\"\n}",
         "options": {}
       },
       "id": "respond-to-portal",
@@ -70,13 +95,24 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        -180,
+        60,
         300
       ]
     }
   ],
   "connections": {
     "Will Submission Webhook": {
+      "main": [
+        [
+          {
+            "node": "Create Client Submission Folder in Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Client Submission Folder in Google Drive": {
       "main": [
         [
           {

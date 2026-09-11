@@ -19,7 +19,8 @@ import {
   ExternalLink,
   Calendar,
   User,
-  MapPin
+  MapPin,
+  Folder
 } from 'lucide-react';
 import { saveSubmission, getSubmissionByRef } from '../data/sampleSubmissions';
 
@@ -225,9 +226,14 @@ export default function WillSubmission({ onNavigate, currentPath }) {
         assetTypes: formData.assetTypes,
         executorName: formData.executorName,
         specialInstructions: formData.specialInstructions,
+        folderName: `${generatedRef} - ${formData.fullName.trim()}`,
+        driveFolderName: `${generatedRef} - ${formData.fullName.trim()}`,
+        driveFolderUrl: 'https://drive.google.com/drive/folders/1Q171pLkFgucgHO0bJ1lRWlxC3en-tHZz',
         documents: files.map(f => ({
           name: f.name,
           size: `${(f.size / 1024).toFixed(1)} KB`,
+          folderName: `${generatedRef} - ${formData.fullName.trim()}`,
+          driveFolderName: `${generatedRef} - ${formData.fullName.trim()}`,
           driveUrl: 'https://drive.google.com/drive/folders/1Q171pLkFgucgHO0bJ1lRWlxC3en-tHZz'
         })),
         status: 'New Submission'
@@ -699,6 +705,24 @@ export default function WillSubmission({ onNavigate, currentPath }) {
                           </div>
                         </div>
                       )}
+
+                      {/* Dedicated Client Vault Folder */}
+                      <div className="mb-4 p-3 bg-amber-50 rounded-xl border border-amber-200/80 flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-800 flex-shrink-0">
+                          <Folder className="w-4 h-4" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <span className="text-[10px] font-bold text-amber-800 uppercase tracking-wider block">
+                            Organized Client Vault Folder
+                          </span>
+                          <span className="text-xs font-semibold text-slate-800 font-mono truncate block">
+                            {trackedSubmission.driveFolderName || trackedSubmission.folderName || `${trackedSubmission.refId} - ${trackedSubmission.fullName}`}
+                          </span>
+                        </div>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-200/60 text-amber-900 flex-shrink-0">
+                          Encrypted
+                        </span>
+                      </div>
 
                       <div>
                         <span className="text-xs text-slate-500 block mb-2 font-medium">

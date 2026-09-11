@@ -705,3 +705,10 @@ textarea:focus,
 .animate-pulse {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
+
+.bg-amber-200\/60 { background-color: rgba(253, 230, 138, 0.6); }
+.bg-amber-50\/70 { background-color: rgba(254, 252, 232, 0.7); }
+.hover\:text-slate-700:hover { color: #334155; }
+.min-w-0 { min-width: 0px; }
+.text-\[10px\] { font-size: 10px; line-height: 14px; }
+

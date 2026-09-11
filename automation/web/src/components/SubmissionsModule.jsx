@@ -16,6 +16,7 @@ import {
   ShieldCheck,
   User,
   MapPin,
+  Folder,
   FolderOpen
 } from 'lucide-react';
 
@@ -557,6 +558,64 @@ export default function SubmissionsModule({ onToast }) {
             )}
 
             {/* Uploaded Documents List */}
+            {/* Dedicated Organized Drive Folder Card */}
+            <div style={{
+              background: '#FEF9C3',
+              border: '1px solid #FDE047',
+              borderRadius: '10px',
+              padding: '12px 16px',
+              marginBottom: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '12px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', overflow: 'hidden' }}>
+                <div style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '8px',
+                  background: '#FEF08A',
+                  color: '#854D0E',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  <Folder size={16} />
+                </div>
+                <div style={{ overflow: 'hidden' }}>
+                  <div style={{ fontSize: '0.68rem', fontWeight: 800, textTransform: 'uppercase', color: '#854D0E', letterSpacing: '0.05em' }}>
+                    Organized Client Google Drive Folder
+                  </div>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#1E293B', fontFamily: 'monospace', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                    {selectedSubmission.driveFolderName || selectedSubmission.folderName || `${selectedSubmission.refId} - ${selectedSubmission.fullName}`}
+                  </div>
+                </div>
+              </div>
+              <a
+                href={selectedSubmission.driveFolderUrl || 'https://drive.google.com/drive/folders/1Q171pLkFgucgHO0bJ1lRWlxC3en-tHZz'}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  background: '#854D0E',
+                  color: '#FFFFFF',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  textDecoration: 'none',
+                  flexShrink: 0
+                }}
+              >
+                <span>Open Folder</span>
+                <ExternalLink size={12} />
+              </a>
+            </div>
+
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                 <h4 style={{
@@ -575,7 +634,7 @@ export default function SubmissionsModule({ onToast }) {
                   rel="noopener noreferrer"
                   style={{
                     fontSize: '0.75rem',
-                    color: '#B48A22',
+                    color: '#64748B',
                     fontWeight: 600,
                     textDecoration: 'none',
                     display: 'flex',
@@ -584,7 +643,7 @@ export default function SubmissionsModule({ onToast }) {
                   }}
                 >
                   <FolderOpen size={13} />
-                  <span>Chambers Drive Vault</span>
+                  <span>All Vault Root</span>
                 </a>
               </div>
 

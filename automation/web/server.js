@@ -360,10 +360,25 @@ app.post('/api/will-submission', upload.array('documents', 10), async (req, res)
       }
     }
 
-    // Persist uploaded files to local uploads vault
+    // Organize uploaded files into a dedicated client subfolder in local vault & Drive
+    const cleanClientName = (fullName || 'Client').replace(/[/\\?%*:|"<>]/g, '').trim() || 'Client';
+    const folderName = `${generatedRef} - ${cleanClientName}`;
+    const clientUploadDir = path.join(UPLOADS_DIR, folderName);
+
+    try {
+      if (!fs.existsSync(clientUploadDir)) {
+        fs.mkdirSync(clientUploadDir, { recursive: true });
+      }
+    } catch (dirErr) {
+      console.warn('[Will Submission] Error creating client directory:', dirErr.message);
+    }
+
+    const defaultDriveFolderUrl = 'https://drive.google.com/drive/folders/1Q171pLkFgucgHO0bJ1lRWlxC3en-tHZz';
+
+    // Persist uploaded files into the client's dedicated folder
     const docRecords = files.map((file, index) => {
-      const safeFilename = `${generatedRef}_${index + 1}_${file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
-      const filePath = path.join(UPLOADS_DIR, safeFilename);
+      const safeFilename = `${index + 1}_${file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+      const filePath = path.join(clientUploadDir, safeFilename);
       try {
         fs.writeFileSync(filePath, file.buffer);
       } catch (writeErr) {
@@ -373,8 +388,11 @@ app.post('/api/will-submission', upload.array('documents', 10), async (req, res)
       return {
         name: file.originalname,
         size: `${(file.size / 1024).toFixed(1)} KB`,
-        url: `/uploads/${safeFilename}`,
-        driveUrl: 'https://drive.google.com/drive/folders/1Q171pLkFgucgHO0bJ1lRWlxC3en-tHZz'
+        url: `/uploads/${encodeURIComponent(folderName)}/${encodeURIComponent(safeFilename)}`,
+        folderName: folderName,
+        driveFolderName: folderName,
+        driveUrl: defaultDriveFolderUrl,
+        driveFolderUrl: defaultDriveFolderUrl
       };
     });
 
@@ -401,8 +419,18 @@ app.post('/api/will-submission', upload.array('documents', 10), async (req, res)
       assetTypes: parsedAssets,
       executorName: (executorName || '').trim(),
       specialInstructions: (specialInstructions || '').trim(),
+      folderName: folderName,
+      driveFolderName: folderName,
+      driveFolderUrl: defaultDriveFolderUrl,
       documents: docRecords.length > 0 ? docRecords : [
-        { name: 'Confidential_Will_Instructions.pdf', size: '120 KB', driveUrl: 'https://drive.google.com/drive/folders/1Q171pLkFgucgHO0bJ1lRWlxC3en-tHZz' }
+        {
+          name: 'Confidential_Will_Instructions.pdf',
+          size: '120 KB',
+          folderName: folderName,
+          driveFolderName: folderName,
+          driveUrl: defaultDriveFolderUrl,
+          driveFolderUrl: defaultDriveFolderUrl
+        }
       ],
       status: 'New Submission'
     };
@@ -412,7 +440,7 @@ app.post('/api/will-submission', upload.array('documents', 10), async (req, res)
     const updatedSubmissions = [newRecord, ...currentSubmissions.filter(s => s.refId !== generatedRef)];
     saveSubmissions(updatedSubmissions);
 
-    // Build form data payload for optional n8n Webhook (for Google Drive streaming & Sheet logging)
+    // Build form data payload for n8n Webhook (creates dedicated folder in Drive & logs sheet)
     try {
       const form = new FormData();
       form.append('refId', generatedRef);
@@ -431,7 +459,25 @@ app.post('/api/will-submission', upload.array('documents', 10), async (req, res)
         method: 'POST',
         data: form,
         headers: form.getHeaders(),
-        timeout: 15000
+        timeout: 25000
+      }).then((n8nRes) => {
+        if (n8nRes && (n8nRes.driveFolderUrl || n8nRes.folderName)) {
+          console.log(`[Will Submission] n8n created organized Drive folder for ${generatedRef}: ${n8nRes.driveFolderUrl || n8nRes.folderName}`);
+          const liveSubs = loadSubmissions();
+          const target = liveSubs.find(s => s.refId === generatedRef);
+          if (target) {
+            if (n8nRes.driveFolderUrl) target.driveFolderUrl = n8nRes.driveFolderUrl;
+            if (n8nRes.driveFolderId) target.driveFolderId = n8nRes.driveFolderId;
+            if (n8nRes.folderName) target.driveFolderName = n8nRes.folderName;
+            if (target.documents) {
+              target.documents.forEach(d => {
+                if (n8nRes.driveFolderUrl) d.driveFolderUrl = n8nRes.driveFolderUrl;
+                if (n8nRes.driveUrl) d.driveUrl = n8nRes.driveUrl;
+              });
+            }
+            saveSubmissions(liveSubs);
+          }
+        }
       }).catch((n8nErr) => {
         console.warn('[Will Submission] n8n webhook notification offline:', n8nErr.message);
       });
@@ -442,6 +488,9 @@ app.post('/api/will-submission', upload.array('documents', 10), async (req, res)
     return res.status(200).json({
       success: true,
       refId: generatedRef,
+      folderName: folderName,
+      driveFolderName: folderName,
+      driveFolderUrl: defaultDriveFolderUrl,
       submission: newRecord,
       message: 'Will submission recorded successfully in Chambers Registry.'
     });
