@@ -74,9 +74,14 @@ export default function Navbar({ currentPath, onNavigate }) {
           {/* Mobile Menu Button */}
           <button
             type="button"
-            className="md:hidden p-2 text-white hover:text-amber-400 transition-colors"
+            className={`md:hidden inline-flex items-center justify-center p-2.5 rounded-xl border transition-all duration-200 focus:outline-none active:scale-95 ${
+              isOpen
+                ? 'bg-amber-500/20 border-amber-500/50 text-amber-400 shadow-sm'
+                : 'bg-slate-800/80 border-slate-700/80 text-slate-200 hover:text-amber-400 hover:border-amber-500/40 hover:bg-slate-800'
+            }`}
             onClick={() => setIsOpen(!isOpen)}
-            aria-label="Toggle menu"
+            aria-label="Toggle navigation menu"
+            aria-expanded={isOpen}
           >
             {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
@@ -84,26 +89,30 @@ export default function Navbar({ currentPath, onNavigate }) {
 
         {/* Mobile Dropdown Menu */}
         {isOpen && (
-          <div className="md:hidden py-4 border-t border-slate-800">
+          <div className="md:hidden py-4 border-t border-slate-800 space-y-1">
             {navItems.map((item) => (
               <a
                 key={item.path}
                 href={item.path}
                 onClick={(e) => { e.preventDefault(); handleNavClick(item.path); }}
-                className={`block py-3 text-sm hover:text-amber-400 transition-colors ${
-                  isActive(item.path) ? 'text-amber-400 font-semibold' : 'text-slate-200'
+                className={`block px-4 py-3 rounded-lg text-sm transition-colors ${
+                  isActive(item.path)
+                    ? 'bg-amber-500/10 text-amber-400 font-semibold border-l-4 border-amber-500'
+                    : 'text-slate-200 hover:bg-slate-800 hover:text-amber-400'
                 }`}
               >
                 {item.label}
               </a>
             ))}
-            <a
-              href="/contact"
-              onClick={(e) => { e.preventDefault(); handleNavClick('/contact'); }}
-              className="block mt-4 bg-amber-700 hover:bg-amber-800 text-white px-6 py-3 rounded-md text-sm text-center font-semibold transition-colors"
-            >
-              Free Consultation
-            </a>
+            <div className="pt-2">
+              <a
+                href="/contact"
+                onClick={(e) => { e.preventDefault(); handleNavClick('/contact'); }}
+                className="block w-full bg-amber-700 hover:bg-amber-800 text-white px-6 py-3 rounded-lg text-sm text-center font-semibold transition-colors shadow-sm"
+              >
+                Free Consultation
+              </a>
+            </div>
           </div>
         )}
       </div>

@@ -63,6 +63,16 @@ a {
   cursor: pointer;
 }
 
+button {
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
 button, input, select, textarea {
   font: inherit;
   color: inherit;
@@ -488,6 +498,7 @@ button, input, select, textarea {
 .border-slate-200\/80 { border-color: rgba(226, 232, 240, 0.80); }
 .border-slate-300 { border-color: var(--color-slate-300); }
 .border-slate-700 { border-color: var(--color-slate-700); }
+.border-slate-700\/80 { border-color: rgba(51, 65, 85, 0.80); }
 .border-slate-800 { border-color: var(--color-slate-800); }
 
 .border-amber-100 { border-color: #fef3c7; }
@@ -514,6 +525,7 @@ button, input, select, textarea {
 
 .hover\:border-slate-300:hover { border-color: var(--color-slate-300); }
 .hover\:border-amber-600:hover { border-color: var(--color-amber-600); }
+.hover\:border-amber-500\/40:hover { border-color: rgba(245, 158, 11, 0.40); }
 
 /* Rings */
 .ring-2 { box-shadow: 0 0 0 2px var(--color-amber-500); }
@@ -630,8 +642,15 @@ textarea:focus,
   transition-duration: 0.2s;
 }
 
+.duration-200 {
+  transition-duration: 200ms;
+}
 .duration-300 {
   transition-duration: 300ms;
+}
+
+.active\:scale-95:active {
+  transform: scale(0.95);
 }
 
 .hover\:opacity-80:hover { opacity: 0.8; }
