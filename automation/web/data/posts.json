@@ -1,5 +1,30 @@
 [
   {
+    "Content ID": "META-VERIFY-001",
+    "Title": "Automated Meta publication verification",
+    "Caption": "VBL Law Chambers Legal Technology System Test [Automated Verification]",
+    "Platforms": "threads",
+    "Scheduled DateTime": "2026-09-12T06:03:13.952Z",
+    "Status": "Posted",
+    "Drive File ID": "",
+    "platformStatuses": {
+      "threads": {
+        "platform": "threads",
+        "state": "completed",
+        "containerId": "18093940745288967",
+        "postId": "18331274191276078",
+        "releaseUrl": "https://www.threads.com/@vbllawchambers/post/DdLTBLLmQAr",
+        "retryCount": 0,
+        "lastAttemptAt": "2026-09-12T06:03:05.976Z",
+        "failureKind": null,
+        "lastError": null
+      }
+    },
+    "publishState": "completed",
+    "failureKind": null,
+    "lastAttemptAt": "2026-09-12T06:03:15.474Z"
+  },
+  {
     "Content ID": "W-001",
     "Title": "Why Every Family Should Consider a Legal Will in Kavali",
     "Caption": "Why early testamentary planning under the Indian Succession Act, 1925 is the most effective safeguard against partition litigation.",
