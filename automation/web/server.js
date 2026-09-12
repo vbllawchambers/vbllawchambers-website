@@ -10,6 +10,8 @@ import fs from 'fs';
 import os from 'os';
 import crypto from 'crypto';
 import * as db from './db.js';
+import * as metaAdapters from './publishing/meta.js';
+import * as publishState from './publishing/state.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -485,6 +487,148 @@ app.get('/api/posts', requireAdminAuth, async (req, res) => {
       posts: cachedPosts,
       message: 'Automation pipeline (n8n) is in standby. Showing chambers content calendar.'
     });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Native publishing channels
+// ---------------------------------------------------------------------------
+/**
+ * Reports which channels can actually publish right now.
+ *
+ * "Connected" means credentials are present for the native adapters in
+ * publishing/meta.js - not that a token was validated this second. A token can
+ * still be revoked upstream, which surfaces as AUTH_EXPIRED on the next publish
+ * and flips the channel to "Needs Reconnect"; that state is read back from the
+ * calendar rather than guessed here.
+ */
+function channelInventory() {
+  const e = process.env;
+  const native = [
+    {
+      id: 'facebook',
+      label: 'Facebook Page',
+      connected: Boolean(e.FACEBOOK_PAGE_ID && e.FACEBOOK_PAGE_ACCESS_TOKEN),
+      account: e.FACEBOOK_PAGE_NAME || null,
+      accountId: e.FACEBOOK_PAGE_ID || null,
+      requires: 'FACEBOOK_PAGE_ID + FACEBOOK_PAGE_ACCESS_TOKEN'
+    },
+    {
+      id: 'instagram',
+      label: 'Instagram',
+      connected: Boolean(e.INSTAGRAM_BUSINESS_ACCOUNT_ID && e.FACEBOOK_PAGE_ACCESS_TOKEN),
+      account: e.INSTAGRAM_USERNAME ? `@${e.INSTAGRAM_USERNAME}` : null,
+      accountId: e.INSTAGRAM_BUSINESS_ACCOUNT_ID || null,
+      requires: 'INSTAGRAM_BUSINESS_ACCOUNT_ID + FACEBOOK_PAGE_ACCESS_TOKEN'
+    },
+    {
+      id: 'threads',
+      label: 'Threads',
+      connected: Boolean(e.THREADS_USER_ID && e.THREADS_ACCESS_TOKEN),
+      account: e.INSTAGRAM_USERNAME ? `@${e.INSTAGRAM_USERNAME}` : null,
+      accountId: e.THREADS_USER_ID || null,
+      requires: 'THREADS_USER_ID + THREADS_ACCESS_TOKEN'
+    }
+  ].map(c => ({ ...c, native: true }));
+
+  // Published through n8n rather than the native adapters. Listed so the suite
+  // never implies the chambers has more reach than it actually does.
+  const viaPipeline = [
+    { id: 'youtube', label: 'YouTube', native: false, connected: true, account: null, via: 'n8n YouTube Publisher' },
+    { id: 'linkedin', label: 'LinkedIn', native: false, connected: false, account: null, via: 'not configured' },
+    { id: 'pinterest', label: 'Pinterest', native: false, connected: false, account: null, via: 'trial access denied' }
+  ];
+
+  return [...native, ...viaPipeline];
+}
+
+app.get('/api/channels', requireAdminAuth, (req, res) => {
+  const channels = channelInventory();
+  res.json({
+    success: true,
+    channels,
+    nativeReady: channels.filter(c => c.native && c.connected).map(c => c.id),
+    graphVersion: process.env.META_GRAPH_VERSION || 'v21.0'
+  });
+});
+
+/**
+ * Advances one calendar entry through the publishing state machine.
+ *
+ * Deliberately does NOT block until every channel is live. Instagram
+ * transcoding takes 30-60s, and holding the request open is exactly what lets
+ * a sleeping container die mid-publish and duplicate the post on retry. One
+ * pass runs here; /api/publish/tick carries it the rest of the way.
+ */
+async function advanceCalendarEntry(contentId, passes = 1) {
+  const posts = await db.getPosts();
+  const row = posts.find(p => p['Content ID'] === contentId);
+  if (!row) return null;
+
+  const stored = await db.getPublishState(contentId);
+  const states = publishState.readPlatformStates({
+    Platforms: row.Platforms,
+    platform_statuses: stored?.platform_statuses || {}
+  });
+
+  const drivers = metaAdapters.buildDrivers({
+    caption: row.Caption || row.Title || '',
+    mediaUrl: row['Public Media URL'] || row.mediaUrl || '',
+    mediaType: row.mediaType || (row['Public Media URL'] ? 'image' : 'text')
+  });
+
+  let next = states;
+  for (let i = 0; i < passes; i++) {
+    next = await publishState.advancePost(next, drivers);
+    if (publishState.isSettled(next)) break;
+  }
+
+  const settled = publishState.isSettled(next);
+  const allDone = Object.values(next).every(s => s.state === 'completed');
+  await db.savePublishState(contentId, next, {
+    publishState: settled ? (allDone ? 'completed' : 'failed') : 'pending',
+    status: publishState.rollupStatus(next),
+    failureKind: Object.values(next).find(s => s.failureKind)?.failureKind || null
+  });
+
+  return { contentId, states: next, settled, rollup: publishState.rollupStatus(next) };
+}
+
+app.post('/api/posts/:contentId/publish', requireAdminAuth, async (req, res) => {
+  try {
+    const result = await advanceCalendarEntry(req.params.contentId, 1);
+    if (!result) {
+      return res.status(404).json({ success: false, message: `No calendar entry ${req.params.contentId}` });
+    }
+    return res.json({ success: true, ...result });
+  } catch (err) {
+    console.error('[Publish] Failed:', err.message);
+    return res.status(500).json({ success: false, message: 'Publish dispatch failed.' });
+  }
+});
+
+/**
+ * Carries every in-flight post one step further. This is the endpoint a
+ * scheduler (n8n, cron, or an external ping) calls a few times a day - it is
+ * what makes the pipeline survive the instance sleeping between steps.
+ */
+app.post('/api/publish/tick', requireAdminAuth, async (req, res) => {
+  try {
+    const posts = await db.getPosts();
+    const due = posts.filter(p => {
+      const s = String(p.Status || '').toLowerCase();
+      return s === 'approved' || s === 'publishing' || p.publishState === 'pending';
+    });
+
+    const advanced = [];
+    for (const row of due) {
+      const r = await advanceCalendarEntry(row['Content ID'], 1);
+      if (r) advanced.push({ contentId: r.contentId, rollup: r.rollup, settled: r.settled });
+    }
+    return res.json({ success: true, examined: due.length, advanced });
+  } catch (err) {
+    console.error('[Publish tick] Failed:', err.message);
+    return res.status(500).json({ success: false, message: 'Publish tick failed.' });
   }
 });
 

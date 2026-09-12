@@ -39,7 +39,13 @@ const THREADS = 'https://graph.threads.net/v1.0';
 
 const APP_ID = process.env.FACEBOOK_APP_ID;
 const APP_SECRET = process.env.FACEBOOK_APP_SECRET;
-const USER_TOKEN = process.argv[2] || process.env.FACEBOOK_USER_TOKEN || '';
+let USER_TOKEN = process.argv[2] || process.env.FACEBOOK_USER_TOKEN || '';
+if (!USER_TOKEN) {
+  const metagraphPath = path.join(__dirname, '../secrets/metagraph.txt');
+  if (fs.existsSync(metagraphPath)) {
+    USER_TOKEN = fs.readFileSync(metagraphPath, 'utf8').trim();
+  }
+}
 const THREADS_TOKEN = process.env.THREADS_ACCESS_TOKEN || '';
 const THREADS_USER_ID = process.env.THREADS_USER_ID || '';
 
