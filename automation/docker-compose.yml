@@ -76,7 +76,7 @@ services:
       MAIN_URL: ${POSTIZ_PUBLIC_URL:-http://localhost:4800}
       FRONTEND_URL: ${POSTIZ_PUBLIC_URL:-http://localhost:4800}
       NEXT_PUBLIC_BACKEND_URL: ${POSTIZ_PUBLIC_URL:-http://localhost:4800}/api
-      JWT_SECRET: ${POSTIZ_JWT_SECRET:-advocate-kavali-postiz-jwt-secret-key-32chars-min-2026}
+      JWT_SECRET: ${POSTIZ_JWT_SECRET:?set POSTIZ_JWT_SECRET in automation/.env}
       DATABASE_URL: ${DATABASE_URL:-postgresql://postiz-user:postiz-password@postiz-postgres:5432/postiz-db-local}
       REDIS_URL: ${REDIS_URL:-redis://postiz-redis:6379}
       BACKEND_INTERNAL_URL: http://localhost:3000

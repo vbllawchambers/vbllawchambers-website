@@ -10,7 +10,10 @@ import fs from 'fs';
 import os from 'os';
 import crypto from 'crypto';
 import * as db from './db.js';
-import * as metaAdapters from './publishing/meta.js';
+// Adapters are reached through the registry, which is the single source of
+// truth for which channels exist and what each one needs.
+import * as registry from './publishing/registry.js';
+import * as preflight from './publishing/preflight.js';
 import * as publishState from './publishing/state.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -502,54 +505,41 @@ app.get('/api/posts', requireAdminAuth, async (req, res) => {
  * and flips the channel to "Needs Reconnect"; that state is read back from the
  * calendar rather than guessed here.
  */
-function channelInventory() {
-  const e = process.env;
-  const native = [
-    {
-      id: 'facebook',
-      label: 'Facebook Page',
-      connected: Boolean(e.FACEBOOK_PAGE_ID && e.FACEBOOK_PAGE_ACCESS_TOKEN),
-      account: e.FACEBOOK_PAGE_NAME || null,
-      accountId: e.FACEBOOK_PAGE_ID || null,
-      requires: 'FACEBOOK_PAGE_ID + FACEBOOK_PAGE_ACCESS_TOKEN'
-    },
-    {
-      id: 'instagram',
-      label: 'Instagram',
-      connected: Boolean(e.INSTAGRAM_BUSINESS_ACCOUNT_ID && e.FACEBOOK_PAGE_ACCESS_TOKEN),
-      account: e.INSTAGRAM_USERNAME ? `@${e.INSTAGRAM_USERNAME}` : null,
-      accountId: e.INSTAGRAM_BUSINESS_ACCOUNT_ID || null,
-      requires: 'INSTAGRAM_BUSINESS_ACCOUNT_ID + FACEBOOK_PAGE_ACCESS_TOKEN'
-    },
-    {
-      id: 'threads',
-      label: 'Threads',
-      connected: Boolean(e.THREADS_USER_ID && e.THREADS_ACCESS_TOKEN),
-      account: e.INSTAGRAM_USERNAME ? `@${e.INSTAGRAM_USERNAME}` : null,
-      accountId: e.THREADS_USER_ID || null,
-      requires: 'THREADS_USER_ID + THREADS_ACCESS_TOKEN'
-    }
-  ].map(c => ({ ...c, native: true }));
-
-  // Published through n8n rather than the native adapters. Listed so the suite
-  // never implies the chambers has more reach than it actually does.
-  const viaPipeline = [
-    { id: 'youtube', label: 'YouTube', native: false, connected: true, account: null, via: 'n8n YouTube Publisher' },
-    { id: 'linkedin', label: 'LinkedIn', native: false, connected: false, account: null, via: 'not configured' },
-    { id: 'pinterest', label: 'Pinterest', native: false, connected: false, account: null, via: 'trial access denied' }
-  ];
-
-  return [...native, ...viaPipeline];
-}
-
 app.get('/api/channels', requireAdminAuth, (req, res) => {
-  const channels = channelInventory();
+  // Inventory comes from publishing/registry.js. server.js used to keep its own
+  // parallel list, which is how a channel ends up shown as connected with no
+  // adapter behind it.
+  const channels = registry.channelInventory();
   res.json({
     success: true,
     channels,
     nativeReady: channels.filter(c => c.native && c.connected).map(c => c.id),
+    core: registry.CORE_PLATFORMS,
     graphVersion: process.env.META_GRAPH_VERSION || 'v21.0'
   });
+});
+
+// ---------------------------------------------------------------------------
+// Start Engine pre-flight
+// ---------------------------------------------------------------------------
+// PROTECTED by the same requireAdminAuth as every other privileged route -
+// it reports account names and configuration state.
+app.get('/api/engine/preflight', requireAdminAuth, async (req, res) => {
+  try {
+    const result = await preflight.runPreflight({ db, sendToN8n });
+    return res.json({ success: true, ...result });
+  } catch (err) {
+    // A diagnostic endpoint that can itself fail opaquely is worse than no
+    // diagnostic, so this degrades to NOT_GREEN with the reason attached.
+    console.error('[Preflight] Failed:', err.message);
+    return res.status(200).json({
+      success: false,
+      signal: 'NOT_GREEN',
+      armed: false,
+      error: err.message,
+      checkedAt: new Date().toISOString()
+    });
+  }
 });
 
 /**
@@ -571,11 +561,13 @@ async function advanceCalendarEntry(contentId, passes = 1) {
     platform_statuses: stored?.platform_statuses || {}
   });
 
-  const drivers = metaAdapters.buildDrivers({
+  const drivers = registry.buildAllDrivers({
     caption: row.Caption || row.Title || '',
+    title: row.Title || '',
     mediaUrl: row['Public Media URL'] || row.mediaUrl || '',
-    mediaType: row.mediaType || (row['Public Media URL'] ? 'image' : 'text')
-  });
+    mediaType: row.mediaType || (row['Public Media URL'] ? 'image' : 'text'),
+    link: row.Link || ''
+  }, registry.ALL_PLATFORMS);
 
   let next = states;
   for (let i = 0; i < passes; i++) {
@@ -593,6 +585,150 @@ async function advanceCalendarEntry(contentId, passes = 1) {
 
   return { contentId, states: next, settled, rollup: publishState.rollupStatus(next) };
 }
+
+/**
+ * One-click multi-channel publish.
+ *
+ * IDEMPOTENCY is the whole point of this endpoint. Publishing state lives in
+ * Supabase, not in process memory, so a container that restarts mid-batch
+ * resumes instead of re-posting. Any platform already recorded as `completed`
+ * is SKIPPED without touching the network - a duplicate post on a client-facing
+ * feed is not recoverable.
+ *
+ * PARTIAL SUCCESS is first-class: a failing optional channel never undoes a
+ * successful one, and the response reports each platform separately.
+ */
+app.post('/api/publish/batch', requireAdminAuth, async (req, res) => {
+  try {
+    const { contentId, platforms } = req.body || {};
+    if (!contentId) {
+      return res.status(400).json({ success: false, message: 'contentId is required' });
+    }
+
+    // Never trust the caller's platform list.
+    const requested = Array.isArray(platforms) && platforms.length
+      ? platforms
+      : registry.ALL_PLATFORMS;
+    const check = registry.validatePlatforms(requested);
+    if (!check.valid) {
+      return res.status(400).json({ success: false, message: check.error });
+    }
+
+    const posts = await db.getPosts();
+    const row = posts.find(p => p['Content ID'] === contentId);
+    if (!row) {
+      return res.status(404).json({ success: false, message: `No calendar entry ${contentId}` });
+    }
+
+    const stored = await db.getPublishState(contentId);
+    const existing = stored?.platform_statuses || {};
+
+    const post = {
+      caption: row.Caption || row.Title || '',
+      title: row.Title || '',
+      mediaUrl: row['Public Media URL'] || row.mediaUrl || '',
+      mediaType: row.mediaType || (row['Public Media URL'] ? 'image' : 'text'),
+      link: row.Link || ''
+    };
+
+    const drivers = registry.buildAllDrivers(post, check.platforms);
+    const states = {};
+    const outcome = [];
+
+    for (const platform of check.platforms) {
+      const prior = existing[platform];
+
+      // 1. Already published -> skip. Checked before anything else.
+      if (prior?.state === 'completed') {
+        states[platform] = prior;
+        outcome.push({ platform, result: 'ALREADY_PUBLISHED', postId: prior.postId, permalink: prior.releaseUrl });
+        continue;
+      }
+
+      // 2. Not configured -> skip, do not fail the batch.
+      if (!drivers[platform]) {
+        const missing = registry.missingKeys(platform);
+        states[platform] = {
+          ...publishState.emptyPlatformState(platform),
+          state: 'failed',
+          failureKind: 'CONFIGURATION_ERROR',
+          lastError: missing.length ? `not configured (missing ${missing.join(', ')})` : 'no native adapter'
+        };
+        outcome.push({ platform, result: 'SKIPPED', reason: 'NOT_CONFIGURED', missing });
+        continue;
+      }
+
+      // 3. Advance one step. Long-running platforms (Instagram transcoding)
+      //    stay 'pending' and are carried forward by /api/publish/tick rather
+      //    than holding this request open.
+      const start = prior || publishState.emptyPlatformState(platform);
+      const next = await publishState.advance(start, drivers[platform]);
+      states[platform] = next;
+
+      outcome.push({
+        platform,
+        result: next.state === 'completed' ? 'PUBLISHED'
+          : next.state === 'failed' ? 'FAILED'
+          : 'PROCESSING',
+        postId: next.postId || null,
+        permalink: next.releaseUrl || null,
+        errorCode: next.failureKind || null,
+        error: next.lastError || null,
+        attemptCount: next.retryCount || 0
+      });
+    }
+
+    // Persist immediately: an external post id that only exists in memory is
+    // how a restart turns into a duplicate post.
+    const merged = { ...existing, ...states };
+    const settled = Object.values(merged).every(s => s.state === 'completed' || s.state === 'failed');
+    const allDone = Object.values(merged).every(s => s.state === 'completed');
+    await db.savePublishState(contentId, merged, {
+      publishState: settled ? (allDone ? 'completed' : 'failed') : 'pending',
+      status: publishState.rollupStatus(merged),
+      failureKind: Object.values(merged).find(s => s.failureKind)?.failureKind || null
+    });
+
+    const published = outcome.filter(o => o.result === 'PUBLISHED').length;
+    const failed = outcome.filter(o => o.result === 'FAILED').length;
+
+    return res.json({
+      success: true,
+      contentId,
+      rollup: publishState.rollupStatus(merged),
+      settled,
+      summary: {
+        requested: check.platforms.length,
+        published,
+        alreadyPublished: outcome.filter(o => o.result === 'ALREADY_PUBLISHED').length,
+        processing: outcome.filter(o => o.result === 'PROCESSING').length,
+        skipped: outcome.filter(o => o.result === 'SKIPPED').length,
+        failed
+      },
+      results: outcome
+    });
+  } catch (err) {
+    console.error('[Batch publish] Failed:', err.message);
+    return res.status(500).json({ success: false, message: 'Batch publish failed.' });
+  }
+});
+
+/** Current publishing state for one entry — drives the UI progress display. */
+app.get('/api/publish/status/:contentId', requireAdminAuth, async (req, res) => {
+  try {
+    const stored = await db.getPublishState(req.params.contentId);
+    if (!stored) return res.status(404).json({ success: false, message: 'Not found' });
+    return res.json({
+      success: true,
+      contentId: req.params.contentId,
+      publishState: stored.publish_state,
+      status: stored.status,
+      platforms: stored.platform_statuses || {}
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
 
 app.post('/api/posts/:contentId/publish', requireAdminAuth, async (req, res) => {
   try {

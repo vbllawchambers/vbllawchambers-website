@@ -4,6 +4,7 @@
   "description": "VBL Law Chambers - Advocate Social Media Content & Scheduling Suite (React + Vite)",
   "type": "module",
   "scripts": {
+    "start": "node --max-old-space-size=400 server.js",
     "dev:server": "node server.js",
     "dev:client": "vite",
     "dev": "concurrently \"node server.js\" \"vite\"",

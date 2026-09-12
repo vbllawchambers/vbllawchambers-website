@@ -3,6 +3,7 @@ import Header from './components/Header';
 import Toast from './components/Toast';
 import UploaderModule from './components/UploaderModule';
 import SubmissionsModule from './components/SubmissionsModule';
+import EnginePanel from './components/EnginePanel';
 import { Lock, KeyRound, AlertCircle, Scale, Share2, FileText } from 'lucide-react';
 
 export default function App() {
@@ -17,7 +18,6 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [feedError, setFeedError] = useState(null);
   const [pipelineStatus, setPipelineStatus] = useState('checking');
-  const [channels, setChannels] = useState([]);
   const [toasts, setToasts] = useState([]);
 
   const addToast = useCallback((message, type = 'success') => {
@@ -96,20 +96,6 @@ export default function App() {
         setPosts(data.posts);
         setFeedError(null);
         setPipelineStatus(data.offline ? 'standby' : 'online');
-      }
-
-      // Which channels can actually publish. Fetched alongside the calendar so
-      // the suite never implies reach the chambers does not have.
-      try {
-        const chRes = await fetch('/api/channels', {
-          headers: { Authorization: `Bearer ${currentToken}` }
-        });
-        if (chRes.ok) {
-          const chData = await chRes.json();
-          if (Array.isArray(chData.channels)) setChannels(chData.channels);
-        }
-      } catch {
-        // Channel status is informational; its absence must not break the feed.
       }
     } catch (err) {
       if (!err.message?.includes('standby') && !err.message?.includes('ECONNREFUSED')) {
@@ -361,49 +347,12 @@ export default function App() {
           </div>
         </div>
 
-        {/* Publishing channel status. Shows what can actually publish right
-            now: a channel without credentials is listed as unavailable rather
-            than quietly omitted, so the calendar never implies more reach than
-            the chambers has. */}
-        {activeTab !== 'submissions' && channels.length > 0 && (
-          <div
-            style={{
-              display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center',
-              padding: '12px 16px', marginBottom: '16px',
-              background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px'
-            }}
-          >
-            <span style={{
-              fontSize: '11px', fontWeight: 700, textTransform: 'uppercase',
-              letterSpacing: '0.05em', color: '#64748B', marginRight: '4px'
-            }}>
-              Publishing channels
-            </span>
-            {channels.map((c) => (
-              <span
-                key={c.id}
-                title={c.connected
-                  ? `${c.label}${c.account ? ` — ${c.account}` : ''}${c.native ? ' (native adapter)' : ` (via ${c.via})`}`
-                  : `${c.label} unavailable — ${c.requires || c.via}`}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: '6px',
-                  fontSize: '12px', fontWeight: 600, padding: '4px 10px', borderRadius: '999px',
-                  background: c.connected ? '#ECFDF5' : '#F1F5F9',
-                  color: c.connected ? '#065F46' : '#64748B',
-                  border: `1px solid ${c.connected ? '#A7F3D0' : '#E2E8F0'}`
-                }}
-              >
-                <span style={{
-                  width: '7px', height: '7px', borderRadius: '50%',
-                  background: c.connected ? '#10B981' : '#CBD5E1'
-                }} />
-                {c.label}
-                {c.connected && c.account ? (
-                  <span style={{ fontWeight: 400, opacity: 0.75 }}>{c.account}</span>
-                ) : null}
-              </span>
-            ))}
-          </div>
+        {/* Start Engine: pre-flight diagnostics, GREEN SIGNAL state and
+            one-click multi-channel publishing. Replaces the earlier read-only
+            channel strip - the channel list now comes back from the pre-flight
+            itself rather than from a separate endpoint. */}
+        {activeTab !== 'submissions' && (
+          <EnginePanel authToken={authToken} posts={posts} onToast={addToast} />
         )}
 
         {activeTab === 'submissions' ? (

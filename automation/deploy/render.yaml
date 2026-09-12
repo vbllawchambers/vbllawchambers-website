@@ -23,12 +23,15 @@
 #   plus its own Postgres. Elasticsearch needs a disk, and disks on Render are
 #   paid + always-on. Publishing therefore happens directly from n8n instead.
 #
-# ── COLD-START NOTE FOR UPLOADS ───────────────────────────────────────────
-#   The portal buffers uploads in memory (multer.memoryStorage, 250 MB cap).
-#   On a 512 MB instance a large video WILL OOM. Before relying on this in
-#   production, move uploads to browser -> Google Drive directly and send only
-#   the file ID through the portal. Meta/Pinterest fetch media from a URL, so
-#   only YouTube needs real bytes to pass through.
+# ── UPLOAD MEMORY (resolved) ──────────────────────────────────────────────
+#   Uploads stream to disk via multer.diskStorage into os.tmpdir(), and are
+#   swept on response finish. Peak heap is therefore independent of file size;
+#   the earlier multer.memoryStorage path (250 MB x 10 files = 2.5 GB of heap
+#   requested) would OOM-kill this container and is gone.
+#   Meta, Threads and Pinterest fetch media from a PUBLIC URL, so no bytes pass
+#   through Node at all for those. LinkedIn requires an upload, and streams the
+#   source response body straight into the PUT without buffering. Only YouTube
+#   moves real bytes, and that happens inside n8n, not here.
 # =============================================================================
 
 services:
@@ -48,6 +51,13 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      # Cap V8's heap below the container limit. Without this Node sizes the
+      # old space from the HOST's memory, not the cgroup, so it happily grows
+      # past 512MB and the container is OOM-killed instead of GCing. 400MB
+      # leaves headroom for the runtime, sockets and the stream buffers used
+      # by the upload path.
+      - key: NODE_OPTIONS
+        value: --max-old-space-size=400
       # Render injects PORT and expects the service to bind it. server.js reads
       # WEB_PORT, so these must agree - see the PORT note in the README.
       - key: WEB_PORT
